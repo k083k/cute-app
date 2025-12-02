@@ -7,6 +7,7 @@ interface BibleVerse {
   text: string;
   translation_id: string;
   translation_name: string;
+  translation_language?: string;
 }
 
 export default function BiblePage() {
@@ -25,40 +26,24 @@ export default function BiblePage() {
       setLoading(true);
       setError(null);
 
-      // Get a consistent verse for the day based on date
-      const today = new Date();
-      const dayOfYear = Math.floor((today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) / 86400000);
-
-      // List of encouraging verses
-      const verses = [
-        'John 3:16',
-        'Philippians 4:13',
-        'Jeremiah 29:11',
-        'Proverbs 3:5-6',
-        'Romans 8:28',
-        'Isaiah 41:10',
-        'Psalm 23:1',
-        'Matthew 11:28',
-        'Joshua 1:9',
-        'Psalm 46:1',
-        '2 Timothy 1:7',
-        'Psalm 37:4',
-        'Romans 8:31',
-        'Proverbs 16:3',
-        'Isaiah 40:31'
-      ];
-
-      const verseIndex = dayOfYear % verses.length;
-      const verseReference = verses[verseIndex];
-
-      const response = await fetch(`https://bible-api.com/${encodeURIComponent(verseReference)}`);
+      const response = await fetch('https://bible-api.com/data/web/random', {
+        cache: 'no-store',
+      });
 
       if (!response.ok) {
         throw new Error('Failed to fetch verse');
       }
 
       const data = await response.json();
-      setVerse(data);
+      const randomVerse = data.random_verse;
+
+      setVerse({
+        reference: `${randomVerse.book} ${randomVerse.chapter}:${randomVerse.verse}`,
+        text: randomVerse.text,
+        translation_id: data.translation.identifier,
+        translation_name: data.translation.name,
+        translation_language: data.translation.language,
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
