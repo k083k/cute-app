@@ -1,6 +1,6 @@
 'use client';
 
-import { HeartIcon } from '@heroicons/react/24/solid';
+import { GiftIcon } from '@heroicons/react/24/solid';
 import { useState, useEffect } from 'react';
 
 export default function Footer() {
@@ -16,7 +16,7 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           <p className="text-gray-400 text-sm flex items-center justify-center gap-2">
-            Made with <HeartIcon className="h-4 w-4 text-gray-500" /> for you
+            Made for you <GiftIcon className="h-4 w-4 text-white" />
           </p>
           {mounted && (
             <p className="text-gray-600 text-xs mt-1">

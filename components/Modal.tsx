@@ -2,16 +2,19 @@
 
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment, ReactNode } from 'react';
-import { XMarkIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   children: ReactNode;
   title?: string;
+  onPrevious?: () => void;
+  onNext?: () => void;
+  showNavigation?: boolean;
 }
 
-export default function Modal({ isOpen, onClose, children, title }: ModalProps) {
+export default function Modal({ isOpen, onClose, children, title, onPrevious, onNext, showNavigation = false }: ModalProps) {
   return (
     <Transition appear show={isOpen} as={Fragment}>
       <Dialog as="div" className="relative z-50" onClose={onClose}>
@@ -71,6 +74,35 @@ export default function Modal({ isOpen, onClose, children, title }: ModalProps) 
                 {/* Content */}
                 <div className="relative">
                   {children}
+
+                  {/* Navigation arrows */}
+                  {showNavigation && (
+                    <>
+                      {/* Previous button */}
+                      {onPrevious && (
+                        <button
+                          type="button"
+                          className="absolute left-4 top-1/2 -translate-y-1/2 z-10 rounded-full bg-black/50 p-3 text-white hover:bg-black/70 focus:outline-none focus:ring-2 focus:ring-white transition-all"
+                          onClick={onPrevious}
+                        >
+                          <span className="sr-only">Previous image</span>
+                          <ChevronLeftIcon className="h-8 w-8" aria-hidden="true" />
+                        </button>
+                      )}
+
+                      {/* Next button */}
+                      {onNext && (
+                        <button
+                          type="button"
+                          className="absolute right-4 top-1/2 -translate-y-1/2 z-10 rounded-full bg-black/50 p-3 text-white hover:bg-black/70 focus:outline-none focus:ring-2 focus:ring-white transition-all"
+                          onClick={onNext}
+                        >
+                          <span className="sr-only">Next image</span>
+                          <ChevronRightIcon className="h-8 w-8" aria-hidden="true" />
+                        </button>
+                      )}
+                    </>
+                  )}
                 </div>
               </Dialog.Panel>
             </Transition.Child>

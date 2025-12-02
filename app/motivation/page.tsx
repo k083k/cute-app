@@ -133,8 +133,8 @@ export default function MotivationPage() {
       </div>
 
       {/* Attribution */}
-      <div className="text-center text-sm text-gray-500">
-        <p>Quotes provided by <a href="https://quotable.io/" target="_blank" rel="noopener noreferrer" className="underline hover:text-black">Quotable API</a></p>
+      <div className="text-center text-sm text-white">
+        <p>Quotes provided by <a href="https://quotable.io/" target="_blank" rel="noopener noreferrer" className="underline hover:text-white">Quotable API</a></p>
       </div>
     </div>
   );

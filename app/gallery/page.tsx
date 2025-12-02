@@ -69,6 +69,21 @@ export default function GalleryPage() {
     }
   };
 
+  // Modal navigation functions
+  const goToNextImage = () => {
+    if (!selectedImage) return;
+    const currentIndex = images.findIndex(img => img.id === selectedImage.id);
+    const nextIndex = (currentIndex + 1) % images.length; // Loop back to first
+    setSelectedImage(images[nextIndex]);
+  };
+
+  const goToPrevImage = () => {
+    if (!selectedImage) return;
+    const currentIndex = images.findIndex(img => img.id === selectedImage.id);
+    const prevIndex = currentIndex === 0 ? images.length - 1 : currentIndex - 1; // Loop to last
+    setSelectedImage(images[prevIndex]);
+  };
+
   // Reset to page 1 when screen size or layout changes
   useEffect(() => {
     setCurrentPage(1);
@@ -287,15 +302,7 @@ export default function GalleryPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4">
-      <div className="text-center mb-8">
-        <h1 className="text-4xl md:text-5xl font-bold text-black mb-2">
-          Gallery
-        </h1>
-        <p className="text-gray-600 text-lg">
-          Some moments captured just for you
-        </p>
-      </div>
-
+      
       {/* Tab Layout */}
       <div className="flex justify-center mb-8 border-b border-gray-200">
         <button
@@ -398,6 +405,9 @@ export default function GalleryPage() {
       <Modal
         isOpen={selectedImage !== null}
         onClose={() => setSelectedImage(null)}
+        showNavigation={true}
+        onPrevious={goToPrevImage}
+        onNext={goToNextImage}
       >
         {selectedImage && (
           <div className="relative w-full h-[70vh] bg-gray-100">

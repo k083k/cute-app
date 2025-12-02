@@ -3,12 +3,12 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Disclosure } from '@headlessui/react';
-import { Bars3Icon, XMarkIcon, HeartIcon, SparklesIcon, PhotoIcon } from '@heroicons/react/24/outline';
+import { Bars3Icon, XMarkIcon, GiftIcon, SparklesIcon, PhotoIcon } from '@heroicons/react/24/outline';
 
 const navigation = [
   { name: 'Bible Verse', href: '/', icon: SparklesIcon },
   { name: 'Gallery', href: '/gallery', icon: PhotoIcon },
-  { name: 'Motivation', href: '/motivation', icon: HeartIcon },
+  { name: 'Motivation', href: '/motivation', icon: GiftIcon },
 ];
 
 export default function Navigation() {
