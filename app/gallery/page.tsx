@@ -22,7 +22,6 @@ export default function GalleryPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isMobile, setIsMobile] = useState(false);
   const [activeLayout, setActiveLayout] = useState<LayoutType>('grid');
-  const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
     fetchImages();
@@ -201,95 +200,162 @@ export default function GalleryPage() {
   };
 
   const renderJazzHandsLayout = () => {
-    // Calculate container height based on number of images
-    const containerHeight = Math.max(800, currentImages.length * 100);
+    // Calculate container height
+    const containerHeight = 1000;
+
+    // Animation variants for different crazy effects
+    const getRandomAnimation = () => {
+      const animations = [
+        // Bouncing
+        {
+          type: 'bounce',
+          animate: {
+            y: [0, -100, 0, -50, 0],
+            rotate: [0, 360],
+            scale: [1, 1.2, 0.8, 1.1, 1],
+          },
+          transition: {
+            duration: 3 + Math.random() * 2,
+            repeat: Infinity,
+          }
+        },
+        // Floating
+        {
+          type: 'float',
+          animate: {
+            y: [-20, 20, -20],
+            x: [-10, 10, -10],
+            rotate: [-10, 10, -10],
+          },
+          transition: {
+            duration: 4 + Math.random() * 2,
+            repeat: Infinity,
+          }
+        },
+        // Spinning
+        {
+          type: 'spin',
+          animate: {
+            rotate: [0, 360],
+            scale: [1, 1.1, 1],
+          },
+          transition: {
+            duration: 5 + Math.random() * 3,
+            repeat: Infinity,
+          }
+        },
+        // Pulsing/Appearing/Disappearing
+        {
+          type: 'pulse',
+          animate: {
+            opacity: [0.3, 1, 0.3],
+            scale: [0.8, 1.2, 0.8],
+          },
+          transition: {
+            duration: 2 + Math.random() * 2,
+            repeat: Infinity,
+          }
+        },
+        // Raining (falling)
+        {
+          type: 'rain',
+          animate: {
+            y: [0, containerHeight],
+            rotate: [0, 180, 360],
+          },
+          transition: {
+            duration: 8 + Math.random() * 4,
+            repeat: Infinity,
+          }
+        },
+        // Wiggle
+        {
+          type: 'wiggle',
+          animate: {
+            x: [-30, 30, -30],
+            rotate: [-15, 15, -15],
+          },
+          transition: {
+            duration: 1.5 + Math.random(),
+            repeat: Infinity,
+          }
+        },
+        // Zoom in/out
+        {
+          type: 'zoom',
+          animate: {
+            scale: [0.5, 1.5, 0.5],
+            opacity: [0.5, 1, 0.5],
+          },
+          transition: {
+            duration: 3 + Math.random() * 2,
+            repeat: Infinity,
+          }
+        }
+      ];
+
+      return animations[Math.floor(Math.random() * animations.length)];
+    };
 
     return (
-      <div className="relative mb-8 overflow-hidden bg-gray-50 rounded-lg" style={{ height: `${containerHeight}px` }}>
+      <div
+        className="relative mb-8 overflow-hidden bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50 rounded-lg"
+        style={{ height: `${containerHeight}px` }}
+      >
         {/* Hint text */}
         <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/70 text-white px-4 py-2 rounded-full text-sm z-50 pointer-events-none">
-          Drag images around to explore!
+          Jazz-hands! Just sit back and enjoy the show
         </div>
 
         <AnimatePresence>
-          {currentImages.map((image, index) => {
+          {currentImages.map((image) => {
             // Image dimensions
-            const imageSize = isMobile ? 192 : 256; // w-48 = 192px, w-64 = 256px
-
-            // Random positioning within container bounds
-            // Subtract image size to prevent overflow
-            const maxX = window.innerWidth > 1024 ? 1152 - imageSize : window.innerWidth - 32 - imageSize; // max-w-6xl or screen width
+            const imageSize = isMobile ? 128 : 192; // Smaller for more chaos
+            const maxX = window.innerWidth > 1024 ? 1152 - imageSize : window.innerWidth - 32 - imageSize;
             const maxY = containerHeight - imageSize;
 
+            // Random starting position
             const randomX = Math.random() * maxX;
             const randomY = Math.random() * maxY;
-            const randomRotate = Math.random() * 40 - 20; // -20deg to 20deg
-            const randomDelay = Math.random() * 0.5;
+            const randomRotate = Math.random() * 360;
+            const randomDelay = Math.random() * 2;
+
+            // Get random animation
+            const animation = getRandomAnimation();
 
             return (
               <motion.div
                 key={image.id}
-                drag
-                dragConstraints={{
-                  left: 0,
-                  right: maxX,
-                  top: 0,
-                  bottom: maxY
-                }}
-                dragElastic={0.1}
-                dragTransition={{ bounceStiffness: 300, bounceDamping: 20 }}
-                onDragStart={() => setIsDragging(true)}
-                onDragEnd={() => {
-                  // Delay to prevent click event after drag
-                  setTimeout(() => setIsDragging(false), 100);
-                }}
                 initial={{
                   opacity: 0,
                   scale: 0,
-                  x: maxX / 2,
-                  y: maxY / 2,
-                  rotate: 0
+                  x: randomX,
+                  y: randomY,
+                  rotate: randomRotate
                 }}
                 animate={{
                   opacity: 1,
                   scale: 1,
                   x: randomX,
                   y: randomY,
-                  rotate: randomRotate
+                  rotate: randomRotate,
+                  ...animation.animate
                 }}
                 exit={{ opacity: 0, scale: 0 }}
                 transition={{
-                  duration: 0.8,
-                  delay: randomDelay,
-                  type: "spring",
-                  stiffness: 100
+                  ...animation.transition,
+                  delay: randomDelay
                 }}
-                whileHover={{
-                  scale: 1.05,
-                  zIndex: 10,
-                  cursor: 'grab'
-                }}
-                whileDrag={{
-                  scale: 1.1,
-                  rotate: randomRotate + 10,
-                  zIndex: 20,
-                  cursor: 'grabbing',
-                  boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
-                }}
-                onClick={() => {
-                  if (!isDragging) {
-                    setSelectedImage(image);
-                  }
-                }}
-                className="absolute w-48 h-48 lg:w-64 lg:h-64 bg-white rounded-lg shadow-2xl overflow-hidden cursor-grab active:cursor-grabbing"
+                className="absolute w-32 h-32 lg:w-48 lg:h-48 bg-white rounded-lg shadow-2xl overflow-hidden pointer-events-none"
+                style={{ zIndex: Math.floor(Math.random() * 10) }}
               >
-                <div className="relative w-full h-full bg-gray-200 pointer-events-none">
+                <div className="relative w-full h-full bg-gray-200">
                   <Image
                     src={image.src}
                     alt={image.alt}
                     fill
                     className="object-cover"
-                    sizes="300px"
+                    sizes="200px"
                   />
                 </div>
               </motion.div>
