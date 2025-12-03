@@ -105,7 +105,7 @@ export default function GalleryPage() {
               src={image.src}
               alt={image.alt}
               fill
-              className="object-cover group-hover:opacity-90 transition-opacity"
+              className="object-contain group-hover:opacity-90 transition-opacity"
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             />
           </div>
@@ -115,15 +115,17 @@ export default function GalleryPage() {
   );
 
   const renderBentoLayout = () => {
-    // Bento grid pattern - repeating pattern with no gaps
-    // Each pattern cycle uses exactly 6 cells (2x3 on mobile, 3x2 on desktop)
+    // Bento grid pattern - repeating pattern that properly uses 3 columns on desktop
     const bentoPattern = [
-      'col-span-2 row-span-2', // large square
+      'col-span-2 row-span-2', // large square - 2 cols, 2 rows
+      'col-span-1 row-span-1', // small - fills the right side
+      'col-span-1 row-span-1', // small - fills the right side
       'col-span-1 row-span-1', // small
-      'col-span-1 row-span-1', // small
-      'col-span-1 row-span-1', // small
-      'col-span-1 row-span-1', // small
-      'col-span-2 row-span-1', // wide
+      'col-span-2 row-span-1', // wide - 2 cols, 1 row
+      'col-span-3 row-span-1', // full width - spans all 3 columns
+      'col-span-1 row-span-2', // tall - 1 col, 2 rows
+      'col-span-2 row-span-1', // wide - 2 cols, 1 row
+      'col-span-2 row-span-1', // wide - 2 cols, 1 row
     ];
 
     // For bento, show per-page (9 images fits the pattern nicely)
