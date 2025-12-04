@@ -8,7 +8,16 @@ export async function POST(request: NextRequest) {
     const { code } = await request.json();
 
     // Get the secret code from environment variable
-    const CORRECT_CODE = process.env.SECRET_CODE || 'justyouandme';
+    const CORRECT_CODE = process.env.SECRET_CODE;
+
+    // Check if environment variable is set
+    if (!CORRECT_CODE) {
+      console.error('SECRET_CODE environment variable is not set');
+      return NextResponse.json(
+        { success: false, message: 'Server configuration error' },
+        { status: 500 }
+      );
+    }
 
     // Validate the code
     if (code.toLowerCase() !== CORRECT_CODE.toLowerCase()) {
