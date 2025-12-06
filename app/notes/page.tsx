@@ -183,7 +183,7 @@ export default function NotesPage() {
 
           <motion.button
             onClick={() => setIsAddingNote(true)}
-            className="flex items-center gap-2 px-3 py-3 md:px-6 bg-slate-800 text-white rounded-full hover:bg-slate-900 shadow-lg transition-all"
+            className="flex items-center justify-center md:gap-2 px-3 py-3 md:px-6 bg-slate-800 text-white rounded-full hover:bg-slate-900 shadow-lg transition-all"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
