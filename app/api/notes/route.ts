@@ -10,12 +10,21 @@ async function ensureTable() {
         content TEXT NOT NULL,
         author TEXT NOT NULL,
         color TEXT NOT NULL,
-        x INTEGER NOT NULL,
-        y INTEGER NOT NULL,
+        x REAL NOT NULL,
+        y REAL NOT NULL,
         rotation REAL NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `;
+
+    // Migrate existing table if columns are wrong type
+    // This will fail silently if columns are already REAL
+    try {
+      await sql`ALTER TABLE sticky_notes ALTER COLUMN x TYPE REAL`;
+      await sql`ALTER TABLE sticky_notes ALTER COLUMN y TYPE REAL`;
+    } catch (alterError) {
+      // Ignore - columns already correct type
+    }
   } catch (error) {
     console.error('Error creating table:', error);
   }
