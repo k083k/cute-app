@@ -440,16 +440,12 @@ export default function GalleryPage() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg hover:from-pink-600 hover:to-purple-600 transition-colors font-medium"
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-gray-300 to-gray-500 text-white rounded-lg hover:from-gray-500 hover:to-gray-800 transition-colors font-medium"
                 >
-                  Unlock 🔓
+                  Unlock
                 </button>
               </div>
             </form>
-
-            <div className="mt-6 text-center text-xs text-gray-400">
-              <p>Hint: It's about us 💕</p>
-            </div>
           </motion.div>
         </div>
       )}
