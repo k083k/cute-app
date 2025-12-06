@@ -63,7 +63,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, id });
   } catch (error) {
     console.error('Error creating note:', error);
-    return NextResponse.json({ error: 'Failed to create note' }, { status: 500 });
+    // Return more detailed error information
+    return NextResponse.json({
+      error: 'Failed to create note',
+      details: error instanceof Error ? error.message : 'Unknown error',
+      stack: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.stack : '') : undefined
+    }, { status: 500 });
   }
 }
 

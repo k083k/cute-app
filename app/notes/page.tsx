@@ -100,9 +100,15 @@ export default function NotesPage() {
         setIsAddingNote(false);
         // Fetch latest from server
         fetchNotes();
+      } else {
+        // Log detailed error
+        const errorData = await response.json();
+        console.error('Error adding note:', errorData);
+        alert(`Failed to create note: ${errorData.details || errorData.error}`);
       }
     } catch (error) {
       console.error('Error adding note:', error);
+      alert('Network error: Could not connect to server');
     }
   };
 
