@@ -218,10 +218,14 @@ export default function GalleryPage() {
   const renderSecretLayout = () => (
     <div className="space-y-8">
       {/* Special header for secret section */}
-      <div className="bg-gradient-to-r from-pink-100 via-purple-100 to-pink-100 border-2 border-pink-300 rounded-lg p-8 text-center">
-        <h2 className="text-3xl font-bold text-purple-800 mb-2">🤫 Just You and Me</h2>
-        <p className="text-purple-600">Our special little corner of the internet</p>
-      </div>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="glass-slate border-2 border-slate-300 rounded-2xl p-8 text-center shadow-slate"
+      >
+        <h2 className="text-3xl font-bold text-slate-800 mb-2">Just You and Me</h2>
+        <p className="text-slate-600">Our special little corner of the internet</p>
+      </motion.div>
 
       {/* Secret images grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -255,57 +259,99 @@ export default function GalleryPage() {
   );
 
   return (
-    <div className="max-w-6xl mx-auto px-4">
-      
+    <div className="max-w-6xl mx-auto px-4 py-8">
+      {/* Gallery Header */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-center mb-12"
+      >
+        <h1 className="text-4xl md:text-5xl font-bold mb-4 text-slate-900">
+          Memory Gallery
+        </h1>
+        <p className="text-slate-600 text-lg">
+          Our beautiful moments together
+        </p>
+      </motion.div>
+
       {/* Tab Layout */}
-      <div className="flex justify-center mb-8 border-b border-gray-200">
+      <div className="flex justify-center mb-12 gap-4">
         <button
           onClick={() => setActiveLayout('polaroid')}
-          className={`px-6 py-3 font-medium transition-all ${
+          className={`px-6 py-3 font-medium rounded-full transition-all ${
             activeLayout === 'polaroid'
-              ? 'border-b-2 border-black text-black'
-              : 'text-gray-500 hover:text-gray-700'
+              ? 'bg-slate-800 text-white shadow-lg'
+              : 'bg-white/60 text-slate-700 hover:bg-slate-100'
           }`}
         >
           Polaroid
         </button>
         <button
           onClick={() => setActiveLayout('bento')}
-          className={`px-6 py-3 font-medium transition-all ${
+          className={`px-6 py-3 font-medium rounded-full transition-all ${
             activeLayout === 'bento'
-              ? 'border-b-2 border-black text-black'
-              : 'text-gray-500 hover:text-gray-700'
+              ? 'bg-slate-800 text-white shadow-lg'
+              : 'bg-white/60 text-slate-700 hover:bg-slate-100'
           }`}
         >
           Bento
         </button>
         <button
           onClick={handleSecretTabClick}
-          className={`px-6 py-3 font-medium transition-all ${
+          className={`px-6 py-3 font-medium rounded-full transition-all ${
             activeLayout === 'secret'
-              ? 'border-b-2 border-pink-500 text-pink-600'
-              : 'text-gray-500 hover:text-pink-400'
+              ? 'bg-slate-700 text-white shadow-lg'
+              : 'bg-white/60 text-slate-700 hover:bg-slate-100'
           }`}
         >
-          🤫 Shhhh
+          Secret
         </button>
       </div>
 
       {/* Loading State */}
       {loading && (
-        <div className="flex items-center justify-center min-h-[40vh]">
-          <div className="animate-pulse text-gray-600 text-xl">Loading gallery...</div>
+        <div className="flex flex-col items-center justify-center min-h-[40vh]">
+          <motion.div
+            animate={{
+              scale: [1, 1.1, 1],
+              opacity: [0.5, 1, 0.5],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            }}
+            className="text-slate-600 text-xl mb-4"
+          >
+            Loading your memories...
+          </motion.div>
+          <div className="flex gap-2">
+            {[0, 1, 2].map((i) => (
+              <motion.div
+                key={i}
+                className="w-3 h-3 bg-slate-400 rounded-full"
+                animate={{
+                  y: [0, -10, 0],
+                }}
+                transition={{
+                  duration: 0.6,
+                  repeat: Infinity,
+                  delay: i * 0.2,
+                }}
+              />
+            ))}
+          </div>
         </div>
       )}
 
       {/* Empty State */}
       {!loading && images.length === 0 && (
-        <div className="bg-white border-l-4 border-black p-6 mb-8">
-          <p className="text-black mb-2">
-            <strong>No photos yet!</strong>
+        <div className="glass-slate rounded-2xl shadow-slate p-8 mb-8 border border-slate-200">
+          <p className="text-slate-900 mb-2 text-lg font-semibold">
+            No photos yet!
           </p>
-          <p className="text-gray-600">
-            Add your photos to the <code className="bg-gray-100 px-2 py-1 rounded">public/images/</code> folder.
+          <p className="text-slate-600">
+            Add your photos to the <code className="bg-slate-100 px-2 py-1 rounded">public/images/</code> folder.
             Supported formats: JPG, PNG, GIF, WebP. The gallery will automatically load them!
           </p>
         </div>

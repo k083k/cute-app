@@ -3,21 +3,54 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Disclosure } from '@headlessui/react';
-import { Bars3Icon, XMarkIcon, GiftIcon, SparklesIcon, PhotoIcon } from '@heroicons/react/24/outline';
+import { Bars3Icon, XMarkIcon, GiftIcon, SparklesIcon, PhotoIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
+import { useState, useEffect } from 'react';
 
 const navigation = [
   { name: 'Bible Verse', href: '/', icon: SparklesIcon },
   { name: 'Gallery', href: '/gallery', icon: PhotoIcon },
   { name: 'Motivation', href: '/motivation', icon: GiftIcon },
+  { name: 'Notes', href: '/notes', icon: DocumentTextIcon },
 ];
 
 export default function Navigation() {
   const pathname = usePathname();
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const isActive = (path: string) => pathname === path;
 
+  useEffect(() => {
+    // Check for unread notes from database
+    const checkUnreadNotes = async () => {
+      try {
+        const response = await fetch('/api/notes');
+        if (response.ok) {
+          const notes = await response.json();
+          const lastVisit = localStorage.getItem('lastNotesVisit');
+
+          if (!lastVisit) {
+            setUnreadCount(notes.length);
+          } else {
+            const lastVisitDate = new Date(lastVisit);
+            const newNotes = notes.filter((note: any) => new Date(note.createdAt) > lastVisitDate);
+            setUnreadCount(newNotes.length);
+          }
+        }
+      } catch (error) {
+        console.error('Error checking unread notes:', error);
+      }
+    };
+
+    checkUnreadNotes();
+
+    // Check every 5 seconds for new notes
+    const interval = setInterval(checkUnreadNotes, 5000);
+
+    return () => clearInterval(interval);
+  }, [pathname]);
+
   return (
-    <Disclosure as="nav" className="bg-black border-b border-gray-800 shadow-lg sticky top-0 z-50">
+    <Disclosure as="nav" className="glass-slate border-b border-slate-200 shadow-sm sticky top-0 z-50 backdrop-blur-lg bg-white/80">
       {({ open }) => (
         <>
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -25,7 +58,7 @@ export default function Navigation() {
               {/* Logo/Title */}
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <h1 className="text-white text-xl md:text-2xl font-bold flex items-center gap-2">
+                  <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2 text-slate-900">
                     <span className="hidden sm:inline">Ama Ansaa Asiedu</span>
                     <span className="sm:hidden">Ansaa</span>
                   </h1>
@@ -41,14 +74,19 @@ export default function Navigation() {
                       <Link
                         key={item.name}
                         href={item.href}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                        className={`relative flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
                           isActive(item.href)
-                            ? 'bg-white text-black'
-                            : 'text-gray-300 hover:text-white hover:bg-gray-900'
+                            ? 'bg-slate-900 text-white shadow-lg'
+                            : 'text-slate-700 hover:bg-slate-100'
                         }`}
                       >
                         <Icon className="h-5 w-5" />
                         {item.name}
+                        {item.href === '/notes' && unreadCount > 0 && (
+                          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
+                            {unreadCount}
+                          </span>
+                        )}
                       </Link>
                     );
                   })}
@@ -57,7 +95,7 @@ export default function Navigation() {
 
               {/* Mobile menu button */}
               <div className="md:hidden">
-                <Disclosure.Button className="inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-900 hover:text-white focus:outline-none focus:ring-2 focus:ring-white transition-all">
+                <Disclosure.Button className="inline-flex items-center justify-center rounded-full p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400 transition-all">
                   <span className="sr-only">Open main menu</span>
                   {open ? (
                     <XMarkIcon className="block h-6 w-6" aria-hidden="true" />
@@ -70,7 +108,7 @@ export default function Navigation() {
           </div>
 
           {/* Mobile menu */}
-          <Disclosure.Panel className="md:hidden border-t border-gray-800">
+          <Disclosure.Panel className="md:hidden border-t border-slate-200">
             <div className="space-y-1 px-2 pb-3 pt-2 sm:px-3">
               {navigation.map((item) => {
                 const Icon = item.icon;
@@ -78,14 +116,19 @@ export default function Navigation() {
                   <Link
                     key={item.name}
                     href={item.href}
-                    className={`flex items-center gap-3 px-3 py-2 rounded-md text-base font-medium transition-all ${
+                    className={`relative flex items-center gap-3 px-3 py-2 rounded-full text-base font-medium transition-all ${
                       isActive(item.href)
-                        ? 'bg-white text-black'
-                        : 'text-gray-300 hover:bg-gray-900 hover:text-white'
+                        ? 'bg-slate-900 text-white shadow-lg'
+                        : 'text-slate-700 hover:bg-slate-100'
                     }`}
                   >
                     <Icon className="h-5 w-5" />
                     {item.name}
+                    {item.href === '/notes' && unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
+                        {unreadCount}
+                      </span>
+                    )}
                   </Link>
                 );
               })}

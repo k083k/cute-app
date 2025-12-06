@@ -3,6 +3,45 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
+  /* Muted Color Palette */
+  --slate-50: #f8fafc;
+  --slate-100: #f1f5f9;
+  --slate-200: #e2e8f0;
+  --slate-300: #cbd5e1;
+  --slate-400: #94a3b8;
+  --slate-500: #64748b;
+  --slate-600: #475569;
+  --slate-700: #334155;
+  --slate-800: #1e293b;
+  --slate-900: #0f172a;
+
+  --stone-50: #fafaf9;
+  --stone-100: #f5f5f4;
+  --stone-200: #e7e5e4;
+  --stone-300: #d6d3d1;
+  --stone-400: #a8a29e;
+  --stone-500: #78716c;
+  --stone-600: #57534e;
+  --stone-700: #44403c;
+  --stone-800: #292524;
+  --stone-900: #1c1917;
+
+  --blue-gray-50: #f8fafc;
+  --blue-gray-100: #f1f5f9;
+  --blue-gray-200: #e2e8f0;
+  --blue-gray-300: #cbd5e1;
+  --blue-gray-400: #94a3b8;
+  --blue-gray-500: #64748b;
+  --blue-gray-600: #475569;
+  --blue-gray-700: #334155;
+  --blue-gray-800: #1e293b;
+  --blue-gray-900: #0f172a;
+
+  /* Legacy warm colors (keeping minimal for compatibility) */
+  --peach-500: #64748b;
+  --sage-500: #475569;
+  --lavender-500: #334155;
 }
 
 @theme inline {
@@ -10,6 +49,29 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Muted Color Tokens */
+  --color-slate-50: var(--slate-50);
+  --color-slate-100: var(--slate-100);
+  --color-slate-200: var(--slate-200);
+  --color-slate-300: var(--slate-300);
+  --color-slate-400: var(--slate-400);
+  --color-slate-500: var(--slate-500);
+  --color-slate-600: var(--slate-600);
+  --color-slate-700: var(--slate-700);
+  --color-slate-800: var(--slate-800);
+  --color-slate-900: var(--slate-900);
+
+  --color-stone-50: var(--stone-50);
+  --color-stone-100: var(--stone-100);
+  --color-stone-200: var(--stone-200);
+  --color-stone-300: var(--stone-300);
+  --color-stone-400: var(--stone-400);
+  --color-stone-500: var(--stone-500);
+  --color-stone-600: var(--stone-600);
+  --color-stone-700: var(--stone-700);
+  --color-stone-800: var(--stone-800);
+  --color-stone-900: var(--stone-900);
 }
 
 /* Override dark mode for this app - we want to keep it light and cheerful */
@@ -21,7 +83,8 @@
 }
 
 body {
-  background: var(--background);
+  background: #fafafa;
+  min-height: 100vh;
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
@@ -60,7 +123,140 @@ button, a {
   animation: fade-in 0.5s ease-out;
 }
 
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.6s ease-out;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite linear;
+  background: linear-gradient(to right, transparent 0%, rgba(255, 255, 255, 0.6) 50%, transparent 100%);
+  background-size: 1000px 100%;
+}
+
+@keyframes heart-beat {
+  0%, 100% {
+    transform: scale(1);
+  }
+  25% {
+    transform: scale(1.2);
+  }
+  50% {
+    transform: scale(1);
+  }
+}
+
+.animate-heart-beat {
+  animation: heart-beat 0.6s ease-in-out;
+}
+
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(-100vh) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+.animate-confetti {
+  animation: confetti-fall 3s ease-in forwards;
+}
+
+/* Glass morphism effect */
+.glass {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(226, 232, 240, 0.5);
+}
+
+.glass-slate {
+  background: rgba(248, 250, 252, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(226, 232, 240, 0.5);
+}
+
+.glass-stone {
+  background: rgba(250, 250, 249, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(231, 229, 228, 0.5);
+}
+
 /* Custom shadow */
 .shadow-3xl {
-  box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.15);
+}
+
+.shadow-slate {
+  box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.15);
+}
+
+.shadow-stone {
+  box-shadow: 0 10px 30px -5px rgba(28, 25, 23, 0.12);
+}
+
+/* Decorative elements */
+.decorative-corner {
+  position: relative;
+}
+
+.decorative-corner::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  width: 30px;
+  height: 30px;
+  border-top: 2px solid var(--slate-300);
+  border-left: 2px solid var(--slate-300);
+  border-radius: 4px;
+}
+
+.decorative-corner::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  right: -10px;
+  width: 30px;
+  height: 30px;
+  border-bottom: 2px solid var(--slate-300);
+  border-right: 2px solid var(--slate-300);
+  border-radius: 4px;
 }
