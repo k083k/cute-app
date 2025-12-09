@@ -29,6 +29,7 @@ export default function NotesPage() {
   const [isAddingNote, setIsAddingNote] = useState(false);
   const [newNote, setNewNote] = useState({ content: '', author: '', color: 0 });
   const [mounted, setMounted] = useState(false);
+  const [selectedNote, setSelectedNote] = useState<StickyNote | null>(null);
 
   // Fetch notes from database
   const fetchNotes = async () => {
@@ -312,7 +313,8 @@ export default function NotesPage() {
               dragElastic={0.1}
               onDragEnd={(event, info) => handleDragEnd(note.id, event, info)}
               whileHover={{ scale: 1.05, rotate: 0, zIndex: 100 }}
-              className={`group absolute w-64 h-64 ${colorClasses.bg} ${colorClasses.border} border-2 rounded-sm shadow-lg cursor-move p-6 transition-shadow hover:shadow-2xl`}
+              onClick={() => setSelectedNote(note)}
+              className={`group absolute w-64 h-64 ${colorClasses.bg} ${colorClasses.border} border-2 rounded-sm shadow-lg cursor-pointer p-6 transition-shadow hover:shadow-2xl`}
               style={{
                 left: `${note.x}px`,
                 top: `${note.y}px`,
@@ -351,6 +353,48 @@ export default function NotesPage() {
           );
         })}
       </div>
+
+      {/* Expanded Note Modal */}
+      {selectedNote && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={() => setSelectedNote(null)}
+        >
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0, rotate: 0 }}
+            animate={{ scale: 1, opacity: 1, rotate: 0 }}
+            className={`${getColorClasses(selectedNote.color).bg} ${getColorClasses(selectedNote.color).border} border-4 rounded-sm shadow-2xl p-8 max-w-2xl w-full max-h-[80vh] overflow-auto`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Tape effect */}
+            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 w-24 h-8 bg-slate-200/50 rotate-0" />
+
+            {/* Note content */}
+            <div className="flex flex-col min-h-[300px]">
+              <p className="flex-1 text-gray-900 text-lg leading-relaxed whitespace-pre-wrap break-words mb-6">
+                {selectedNote.content}
+              </p>
+
+              <div className="border-t-2 border-gray-400 pt-4 mt-4">
+                <p className="text-base text-gray-700 font-medium">— {selectedNote.author}</p>
+                <p className="text-sm text-gray-500 mt-2">
+                  {new Date(selectedNote.createdAt).toLocaleDateString()}
+                </p>
+              </div>
+            </div>
+
+            {/* Close button */}
+            <button
+              onClick={() => setSelectedNote(null)}
+              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-gray-800/10 hover:bg-gray-800/20 rounded-full transition-colors"
+            >
+              <span className="text-gray-700 text-xl font-bold">×</span>
+            </button>
+          </motion.div>
+        </motion.div>
+      )}
 
       {/* Mobile warning */}
       <div className="md:hidden fixed bottom-4 left-4 right-4 bg-slate-800 text-white p-4 rounded-lg shadow-lg">
