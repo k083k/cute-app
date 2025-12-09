@@ -267,11 +267,9 @@ export default function GalleryPage() {
         className="text-center mb-12"
       >
         <h1 className="text-4xl md:text-5xl font-bold mb-4 text-slate-900">
-          Memory Gallery
+          Gallery
         </h1>
-        <p className="text-slate-600 text-lg">
-          Our beautiful moments together
-        </p>
+
       </motion.div>
 
       {/* Tab Layout */}
