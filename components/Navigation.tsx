@@ -42,11 +42,6 @@ export default function Navigation() {
     };
 
     checkUnreadNotes();
-
-    // Check every 5 seconds for new notes
-    const interval = setInterval(checkUnreadNotes, 5000);
-
-    return () => clearInterval(interval);
   }, [pathname]);
 
   return (
