@@ -52,10 +52,6 @@ export default function NotesPage() {
 
     // Mark all notes as read when visiting the page
     localStorage.setItem('lastNotesVisit', new Date().toISOString());
-
-    // Poll for new notes every 5 seconds
-    const interval = setInterval(fetchNotes, 5000);
-    return () => clearInterval(interval);
   }, []);
 
   const getRandomPosition = () => {
