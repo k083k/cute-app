@@ -159,9 +159,10 @@ export default function TicTacToePage() {
             // Set board BEFORE setting winner to ensure the winning piece is visible
             setBoard(newBoard);
 
-            // Update winner state if not already set
+            // Update winner state and scores if not already set
             if (winner !== winnerSymbol) {
               setWinner(winnerSymbol);
+              setScores(prev => ({ ...prev, [winnerSymbol]: prev[winnerSymbol] + 1 }));
             }
 
             // Also calculate winning line
@@ -187,6 +188,7 @@ export default function TicTacToePage() {
         if (data.game.is_draw) {
           if (!isDraw) {
             setIsDraw(true);
+            setScores(prev => ({ ...prev, draws: prev.draws + 1 }));
           }
         } else {
           setIsDraw(false);
@@ -297,6 +299,7 @@ export default function TicTacToePage() {
 
     if (gameWinner) {
       setWinner(gameWinner);
+      setScores(prev => ({ ...prev, [gameWinner]: prev[gameWinner] + 1 }));
       await saveGameState(gameId, newBoard, nextPlayer, gameWinner, false);
       saveGameResult(gameWinner, false);
       // Clear the game from active games after a delay
@@ -305,6 +308,7 @@ export default function TicTacToePage() {
       }, 3000);
     } else if (newBoard.every(cell => cell !== null)) {
       setIsDraw(true);
+      setScores(prev => ({ ...prev, draws: prev.draws + 1 }));
       await saveGameState(gameId, newBoard, nextPlayer, null, true);
       saveGameResult(null, true);
       // Clear the game from active games after a delay
@@ -376,6 +380,35 @@ export default function TicTacToePage() {
             Tic Tac Toe
           </h1>
           <p className="text-slate-600">Crosses vs Knots</p>
+        </motion.div>
+
+        {/* Current Session Score Board */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-slate-200 p-6 mb-4"
+        >
+          <h3 className="text-sm font-medium text-slate-500 text-center mb-4">Current Session</h3>
+          <div className="grid grid-cols-3 gap-4 text-center">
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-50">
+              <div className="text-3xl mb-1 text-slate-800">
+                <FontAwesomeIcon icon={faXmark} />
+              </div>
+              <div className="text-2xl font-bold text-slate-800">{scores['X']}</div>
+              <div className="text-xs text-slate-500 font-medium">{playerNames.X || 'Player X'}</div>
+            </div>
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-50">
+              <div className="text-lg mb-1 text-slate-400">Draws</div>
+              <div className="text-2xl font-bold text-slate-600">{scores.draws}</div>
+            </div>
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-50">
+              <div className="text-3xl mb-1 text-slate-800">
+                <FontAwesomeIcon icon={faCircle} className="fa-regular" />
+              </div>
+              <div className="text-2xl font-bold text-slate-800">{scores['O']}</div>
+              <div className="text-xs text-slate-500 font-medium">{playerNames.O || 'Player O'}</div>
+            </div>
+          </div>
         </motion.div>
 
         {/* All-Time Stats */}
