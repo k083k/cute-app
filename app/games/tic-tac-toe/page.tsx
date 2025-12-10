@@ -161,6 +161,8 @@ export default function TicTacToePage() {
             // Update winner state if not already set
             if (winner !== winnerSymbol) {
               setWinner(winnerSymbol);
+              // Refresh stats when winner is detected
+              fetchGameStats();
             }
 
             // Also calculate winning line
@@ -186,6 +188,8 @@ export default function TicTacToePage() {
         if (data.game.is_draw) {
           if (!isDraw) {
             setIsDraw(true);
+            // Refresh stats when draw is detected
+            fetchGameStats();
           }
         } else {
           setIsDraw(false);
