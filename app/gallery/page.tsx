@@ -12,18 +12,13 @@ interface ImageData {
   caption: string;
 }
 
-type LayoutType = 'polaroid' | 'bento' | 'secret';
+type LayoutType = 'polaroid' | 'bento';
 
 export default function GalleryPage() {
   const [images, setImages] = useState<ImageData[]>([]);
-  const [secretImages, setSecretImages] = useState<ImageData[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState<ImageData | null>(null);
   const [activeLayout, setActiveLayout] = useState<LayoutType>('polaroid');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [secretCode, setSecretCode] = useState('');
-  const [authError, setAuthError] = useState('');
 
   useEffect(() => {
     fetchImages();
@@ -41,83 +36,21 @@ export default function GalleryPage() {
     }
   };
 
-  const fetchSecretImages = async () => {
-    try {
-      const response = await fetch('/api/secret-images');
-      if (response.ok) {
-        const data = await response.json();
-        setSecretImages(data);
-      }
-    } catch (error) {
-      console.error('Error fetching secret images:', error);
-    }
-  };
-
-  // Display images based on layout
-  const displayImages = activeLayout === 'secret' ? secretImages : images;
-  const currentImages = displayImages;
+  const currentImages = images;
 
   // Modal navigation functions
   const goToNextImage = () => {
     if (!selectedImage) return;
-    const currentIndex = displayImages.findIndex(img => img.id === selectedImage.id);
-    const nextIndex = (currentIndex + 1) % displayImages.length; // Loop back to first
-    setSelectedImage(displayImages[nextIndex]);
+    const currentIndex = currentImages.findIndex(img => img.id === selectedImage.id);
+    const nextIndex = (currentIndex + 1) % currentImages.length; // Loop back to first
+    setSelectedImage(currentImages[nextIndex]);
   };
 
   const goToPrevImage = () => {
     if (!selectedImage) return;
-    const currentIndex = displayImages.findIndex(img => img.id === selectedImage.id);
-    const prevIndex = currentIndex === 0 ? displayImages.length - 1 : currentIndex - 1; // Loop to last
-    setSelectedImage(displayImages[prevIndex]);
-  };
-
-  // Reset authentication when leaving secret tab
-  useEffect(() => {
-    if (activeLayout !== 'secret' && isAuthenticated) {
-      // Clear authentication when user leaves the secret tab
-      setIsAuthenticated(false);
-    }
-  }, [activeLayout, isAuthenticated]);
-
-  // Handle secret tab click
-  const handleSecretTabClick = () => {
-    // Always show auth modal - maximum security (one-time access per visit)
-    setShowAuthModal(true);
-  };
-
-  // Handle authentication
-  const handleAuthenticate = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ code: secretCode }),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        setIsAuthenticated(true);
-        setShowAuthModal(false);
-        setActiveLayout('secret');
-        setAuthError('');
-        setSecretCode('');
-        // Fetch secret images after successful authentication
-        fetchSecretImages();
-      } else {
-        setAuthError(data.message || 'Incorrect code. Try again!');
-        setSecretCode('');
-      }
-    } catch (error) {
-      console.error('Authentication error:', error);
-      setAuthError('An error occurred. Please try again.');
-      setSecretCode('');
-    }
+    const currentIndex = currentImages.findIndex(img => img.id === selectedImage.id);
+    const prevIndex = currentIndex === 0 ? currentImages.length - 1 : currentIndex - 1; // Loop to last
+    setSelectedImage(currentImages[prevIndex]);
   };
 
   const renderBentoLayout = () => {
@@ -215,48 +148,6 @@ export default function GalleryPage() {
     );
   };
 
-  const renderSecretLayout = () => (
-    <div className="space-y-8">
-      {/* Special header for secret section */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="glass-slate border-2 border-slate-300 rounded-2xl p-8 text-center shadow-slate"
-      >
-        <h2 className="text-3xl font-bold text-slate-800 mb-2">Just You and Me</h2>
-        <p className="text-slate-600">Our special little corner of the internet</p>
-      </motion.div>
-
-      {/* Secret images grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        {currentImages.map((image) => (
-          <motion.div
-            key={image.id}
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
-            className="bg-gradient-to-br from-pink-50 to-purple-50 rounded-lg shadow-xl overflow-hidden hover:shadow-2xl transition-all cursor-pointer group border-2 border-pink-200"
-            onClick={() => setSelectedImage(image)}
-          >
-            <div className="relative h-96 bg-white overflow-hidden">
-              {/* Use regular img tag for API-served images to avoid Next.js Image restrictions */}
-              <img
-                src={image.src}
-                alt={image.alt}
-                className="w-full h-full object-cover blur-3xl group-hover:blur-2xl transition-all duration-300"
-              />
-              {/* Overlay hint */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="bg-black/30 text-white px-4 py-2 rounded-full text-sm opacity-0 group-hover:opacity-100 transition-opacity">
-                  Click to view
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        ))}
-      </div>
-    </div>
-  );
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -293,16 +184,6 @@ export default function GalleryPage() {
           }`}
         >
           Bento
-        </button>
-        <button
-          onClick={handleSecretTabClick}
-          className={`px-6 py-3 font-medium rounded-full transition-all ${
-            activeLayout === 'secret'
-              ? 'bg-slate-700 text-white shadow-lg'
-              : 'bg-white/60 text-slate-700 hover:bg-slate-100'
-          }`}
-        >
-          Secret
         </button>
       </div>
 
@@ -360,7 +241,6 @@ export default function GalleryPage() {
         <>
           {activeLayout === 'polaroid' && renderPolaroidLayout()}
           {activeLayout === 'bento' && renderBentoLayout()}
-          {activeLayout === 'secret' && renderSecretLayout()}
         </>
       )}
 
@@ -374,79 +254,17 @@ export default function GalleryPage() {
       >
         {selectedImage && (
           <div className="relative w-full h-[70vh] bg-gray-100 flex items-center justify-center">
-            {/* Use Next Image for public images, regular img for secret images */}
-            {activeLayout === 'secret' ? (
-              <img
-                src={selectedImage.src}
-                alt={selectedImage.alt}
-                className="max-w-full max-h-full object-contain"
-              />
-            ) : (
-              <Image
-                src={selectedImage.src}
-                alt={selectedImage.alt}
-                fill
-                className="object-contain"
-                sizes="90vw"
-                priority
-              />
-            )}
+            <Image
+              src={selectedImage.src}
+              alt={selectedImage.alt}
+              fill
+              className="object-contain"
+              sizes="90vw"
+              priority
+            />
           </div>
         )}
       </Modal>
-
-      {/* Authentication Modal */}
-      {showAuthModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8"
-          >
-            <div className="text-center mb-6">
-              <div className="text-6xl mb-4">🤫</div>
-              <h3 className="text-2xl font-bold text-gray-800 mb-2">Secret Section</h3>
-              <p className="text-gray-600">Enter the secret code to continue</p>
-            </div>
-
-            <form onSubmit={handleAuthenticate} className="space-y-4">
-              <div>
-                <input
-                  type="password"
-                  value={secretCode}
-                  onChange={(e) => setSecretCode(e.target.value)}
-                  placeholder="Enter secret code..."
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-pink-500 focus:outline-none text-center text-lg"
-                  autoFocus
-                />
-                {authError && (
-                  <p className="text-red-500 text-sm mt-2 text-center">{authError}</p>
-                )}
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowAuthModal(false);
-                    setAuthError('');
-                    setSecretCode('');
-                  }}
-                  className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-4 py-3 bg-gradient-to-r from-gray-300 to-gray-500 text-white rounded-lg hover:from-gray-500 hover:to-gray-800 transition-colors font-medium"
-                >
-                  Unlock
-                </button>
-              </div>
-            </form>
-          </motion.div>
-        </div>
-      )}
     </div>
   );
 }
