@@ -3,13 +3,14 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Disclosure } from '@headlessui/react';
-import { Bars3Icon, XMarkIcon, GiftIcon, SparklesIcon, PhotoIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
+import { Bars3Icon, XMarkIcon, GiftIcon, SparklesIcon, PhotoIcon, DocumentTextIcon, PuzzlePieceIcon } from '@heroicons/react/24/outline';
 
 const navigation = [
   { name: 'Bible Verse', href: '/', icon: SparklesIcon },
   { name: 'Gallery', href: '/gallery', icon: PhotoIcon },
   { name: 'Motivation', href: '/motivation', icon: GiftIcon },
   { name: 'Notes', href: '/notes', icon: DocumentTextIcon },
+  { name: 'Games', href: '/games', icon: PuzzlePieceIcon },
 ];
 
 export default function Navigation() {

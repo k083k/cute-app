@@ -1,0 +1,167 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
+import { LockClosedIcon, HeartIcon } from '@heroicons/react/24/outline';
+
+export default function AuthPage() {
+  const [isSetup, setIsSetup] = useState<boolean | null>(null);
+  const [name, setName] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    checkSetup();
+  }, []);
+
+  const checkSetup = async () => {
+    try {
+      const response = await fetch('/api/users');
+      const data = await response.json();
+      setIsSetup(data.isSetup);
+    } catch (error) {
+      console.error('Failed to check setup:', error);
+    }
+  };
+
+  const handleSetup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Now login with the password
+        await handleLogin();
+      } else {
+        setError(data.error || 'Setup failed');
+      }
+    } catch (error) {
+      setError('An error occurred during setup');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLogin = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        router.push('/');
+        router.refresh();
+      } else {
+        setError(data.error || 'Login failed');
+      }
+    } catch (error) {
+      setError('An error occurred during login');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isSetup === null) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-pink-50 flex items-center justify-center">
+        <div className="text-slate-600">Loading...</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100 flex items-center justify-center px-4 py-12">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="w-full max-w-md"
+      >
+        {/* Card */}
+        <div className="bg-white rounded-3xl shadow-xl border border-slate-200 p-8">
+
+          {/* Title */}
+          <h1 className="text-3xl font-bold text-center text-slate-900 mb-2">
+            {isSetup ? 'Welcome Back' : 'Create Your Password'}
+          </h1>
+          <p className="text-center text-slate-600 mb-8">
+            {isSetup
+              ? 'Enter your password to continue'
+              : 'Set up your password to get started'}
+          </p>
+
+          {/* Form */}
+          <form onSubmit={isSetup ? handleLogin : handleSetup} className="space-y-6">
+            {!isSetup && (
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Your Name
+                </label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Enter your name"
+                  required
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-slate-800 focus:outline-none transition-colors"
+                />
+              </div>
+            )}
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Password
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                required
+                minLength={6}
+                className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-violet-500 focus:outline-none transition-colors"
+              />
+            </div>
+
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm"
+              >
+                {error}
+              </motion.div>
+            )}
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full py-3 bg-slate-800 text-white rounded-xl font-medium shadow-lg hover:bg-slate-900 hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading ? 'Please wait...' : isSetup ? 'Login' : 'Create Password'}
+            </button>
+          </form>
+        </div>
+      </motion.div>
+    </div>
+  );
+}

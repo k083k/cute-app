@@ -4,6 +4,8 @@ import "./globals.css";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Analytics } from "@vercel/analytics/next";
+import { AuthProvider } from "@/components/AuthProvider";
+import AuthGuard from "@/components/AuthGuard";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -42,12 +44,16 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50 min-h-screen flex flex-col`}
       >
-        <Navigation />
-        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {children}
-          <Analytics />
-        </main>
-        <Footer />
+        <AuthProvider>
+          <AuthGuard>
+            <Navigation />
+            <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+              {children}
+              <Analytics />
+            </main>
+            <Footer />
+          </AuthGuard>
+        </AuthProvider>
       </body>
     </html>
   );
