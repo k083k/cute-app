@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowPathIcon, HomeIcon } from '@heroicons/react/24/outline';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -15,6 +15,18 @@ interface GameStats {
   wins: number;
   draws: number;
   losses: number;
+}
+
+interface GameState {
+  id: string;
+  gameType: string;
+  playerX: string;
+  playerO: string;
+  board: Board;
+  currentTurn: 'X' | 'O';
+  winner: string | null;
+  isDraw: boolean;
+  newGameRequestedBy: string | null;
 }
 
 const WINNING_COMBINATIONS = [
@@ -35,24 +47,126 @@ export default function TicTacToePage() {
   const [playerNames, setPlayerNames] = useState<{ X: string; O: string }>({ X: '', O: '' });
   const [currentUserName, setCurrentUserName] = useState<string>('');
   const [newGameRequestedBy, setNewGameRequestedBy] = useState<string | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+
+  const eventSourceRef = useRef<EventSource | null>(null);
 
   useEffect(() => {
-    checkAuthAndAssignPlayer();
+    checkAuthAndInitialize();
     fetchGameStats();
+
+    return () => {
+      // Cleanup SSE connection on unmount
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+      }
+    };
   }, []);
 
   useEffect(() => {
-    // Poll for game updates every 500ms for near real-time feedback
-    if (!gameId) return;
+    // Connect to SSE stream for real-time updates
+    if (!currentUserName) return;
 
-    const interval = setInterval(() => {
-      syncGameState();
-    }, 500);
+    const eventSource = new EventSource('/api/game-stream?gameType=tic-tac-toe');
+    eventSourceRef.current = eventSource;
 
-    return () => clearInterval(interval);
-  }, [gameId]);
+    eventSource.onopen = () => {
+      console.log('SSE connection established');
+      setIsConnected(true);
+    };
 
-  const checkAuthAndAssignPlayer = async () => {
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+
+        if (data.type === 'connected') {
+          console.log('Connected to game stream');
+        } else if (data.type === 'game-update' && data.game) {
+          handleGameUpdate(data.game);
+        }
+      } catch (error) {
+        console.error('Error parsing SSE message:', error);
+      }
+    };
+
+    eventSource.onerror = (error) => {
+      console.error('SSE error:', error);
+      setIsConnected(false);
+      eventSource.close();
+
+      // Reconnect after 3 seconds
+      setTimeout(() => {
+        if (currentUserName) {
+          console.log('Reconnecting to SSE...');
+          // The next render will create a new connection
+        }
+      }, 3000);
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, [currentUserName]);
+
+  const handleGameUpdate = (game: GameState) => {
+    // If the game ID changed (e.g., new game started), reset game state
+    if (game.id !== gameId) {
+      setGameId(game.id);
+      setWinner(null);
+      setWinningLine([]);
+      setIsDraw(false);
+      setNewGameRequestedBy(null);
+    }
+
+    // Update player names
+    const names = { X: game.playerX, O: game.playerO };
+    setPlayerNames(names);
+
+    // Update myPlayer if second player joins
+    if (currentUserName === names.X) {
+      setMyPlayer('X');
+    } else if (currentUserName === names.O) {
+      setMyPlayer('O');
+    }
+
+    // Update board state
+    setBoard(game.board);
+    setCurrentPlayer(game.currentTurn);
+
+    // Handle winner
+    if (game.winner) {
+      const winnerSymbol = game.winner === names.X ? 'X' : game.winner === names.O ? 'O' : null;
+      if (winnerSymbol && winner !== winnerSymbol) {
+        setWinner(winnerSymbol);
+        fetchGameStats();
+
+        // Calculate winning line
+        for (const combo of WINNING_COMBINATIONS) {
+          const [a, b, c] = combo;
+          if (game.board[a] && game.board[a] === game.board[b] && game.board[a] === game.board[c]) {
+            setWinningLine(combo);
+            break;
+          }
+        }
+      }
+    } else {
+      setWinner(null);
+      setWinningLine([]);
+    }
+
+    // Handle draw
+    if (game.isDraw && !isDraw) {
+      setIsDraw(true);
+      fetchGameStats();
+    } else if (!game.isDraw) {
+      setIsDraw(false);
+    }
+
+    // Handle new game requests
+    setNewGameRequestedBy(game.newGameRequestedBy);
+  };
+
+  const checkAuthAndInitialize = async () => {
     try {
       const response = await fetch('/api/auth/check');
       const data = await response.json();
@@ -61,7 +175,7 @@ export default function TicTacToePage() {
         setCurrentUserName(data.user.name);
       }
 
-      // Load or create active game
+      // Load existing game or create new one
       await loadOrCreateGame(data.user?.name);
     } catch (error) {
       console.error('Error checking auth:', error);
@@ -70,25 +184,24 @@ export default function TicTacToePage() {
 
   const loadOrCreateGame = async (userName?: string) => {
     try {
-      const response = await fetch('/api/active-game?gameType=tic-tac-toe');
+      const response = await fetch('/api/game-action?gameType=tic-tac-toe');
       const data = await response.json();
 
       if (data.game) {
         // Load existing game
         setGameId(data.game.id);
-        setBoard(JSON.parse(data.game.board));
-        setCurrentPlayer(data.game.current_turn as 'X' | 'O');
+        setBoard(data.game.board);
+        setCurrentPlayer(data.game.currentTurn);
 
-        // Set player names from loaded game
-        let names = { X: data.game.player_x, O: data.game.player_o };
+        const names = { X: data.game.playerX, O: data.game.playerO };
 
         // If second player is joining (player O is "Waiting...")
         if (names.O === 'Waiting...' && userName && userName !== names.X) {
-          names = { X: names.X, O: userName };
+          names.O = userName;
           setPlayerNames(names);
           setMyPlayer('O');
           // Update the game with the second player's name
-          await saveGameState(data.game.id, JSON.parse(data.game.board), data.game.current_turn as 'X' | 'O', null, false, names);
+          await saveGameState(data.game.id, data.game.board, data.game.currentTurn, null, false, names);
         } else {
           setPlayerNames(names);
 
@@ -101,10 +214,14 @@ export default function TicTacToePage() {
         }
 
         if (data.game.winner) {
-          setWinner(data.game.winner as Player);
+          const winnerSymbol = data.game.winner === names.X ? 'X' : 'O';
+          setWinner(winnerSymbol as Player);
         }
-        if (data.game.is_draw) {
+        if (data.game.isDraw) {
           setIsDraw(true);
+        }
+        if (data.game.newGameRequestedBy) {
+          setNewGameRequestedBy(data.game.newGameRequestedBy);
         }
       } else {
         // Create new game - first player is X
@@ -122,91 +239,6 @@ export default function TicTacToePage() {
     }
   };
 
-  const syncGameState = async () => {
-    try {
-      const response = await fetch('/api/active-game?gameType=tic-tac-toe');
-      const data = await response.json();
-
-      if (data.game) {
-        // If the game ID changed (e.g., new game started), reset all game state
-        if (data.game.id !== gameId) {
-          setGameId(data.game.id);
-          // Reset game state for new game
-          setWinner(null);
-          setWinningLine([]);
-          setIsDraw(false);
-          setNewGameRequestedBy(null);
-        }
-
-        const newBoard = JSON.parse(data.game.board);
-
-        // Update player names if second player joined
-        const names = { X: data.game.player_x, O: data.game.player_o };
-        setPlayerNames(names);
-
-        // Update myPlayer if it changed (second player joining)
-        if (currentUserName === names.X) {
-          setMyPlayer('X');
-        } else if (currentUserName === names.O) {
-          setMyPlayer('O');
-        }
-
-        // Convert winner name to player symbol (X or O)
-        if (data.game.winner) {
-          const winnerSymbol = data.game.winner === names.X ? 'X' : data.game.winner === names.O ? 'O' : null;
-          if (winnerSymbol) {
-            // Set board BEFORE setting winner to ensure the winning piece is visible
-            setBoard(newBoard);
-
-            // Update winner state if not already set
-            if (winner !== winnerSymbol) {
-              setWinner(winnerSymbol);
-              // Refresh stats when winner is detected
-              fetchGameStats();
-            }
-
-            // Also calculate winning line
-            const gameBoard = newBoard;
-            for (const combo of WINNING_COMBINATIONS) {
-              const [a, b, c] = combo;
-              if (gameBoard[a] && gameBoard[a] === gameBoard[b] && gameBoard[a] === gameBoard[c]) {
-                setWinningLine(combo);
-                break;
-              }
-            }
-          }
-        } else {
-          // Only update board and current player if no winner
-          setBoard(newBoard);
-          setCurrentPlayer(data.game.current_turn as 'X' | 'O');
-          // Clear winner and draw states if they were previously set
-          setWinner(null);
-          setWinningLine([]);
-          setIsDraw(false);
-        }
-
-        if (data.game.is_draw) {
-          if (!isDraw) {
-            setIsDraw(true);
-            // Refresh stats when draw is detected
-            fetchGameStats();
-          }
-        } else {
-          setIsDraw(false);
-        }
-
-        // Check for new game requests
-        if (data.game.new_game_requested_by) {
-          setNewGameRequestedBy(data.game.new_game_requested_by);
-        } else {
-          setNewGameRequestedBy(null);
-        }
-      }
-    } catch (error) {
-      console.error('Error syncing game state:', error);
-    }
-  };
-
   const saveGameState = async (
     id: string,
     boardState: Board,
@@ -218,7 +250,7 @@ export default function TicTacToePage() {
   ) => {
     try {
       const playerNamesToUse = names || playerNames;
-      await fetch('/api/active-game', {
+      await fetch('/api/game-action', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -226,7 +258,7 @@ export default function TicTacToePage() {
           gameType: 'tic-tac-toe',
           playerX: playerNamesToUse.X,
           playerO: playerNamesToUse.O,
-          board: JSON.stringify(boardState),
+          board: boardState,
           currentTurn: turn,
           winner: winnerPlayer ? playerNamesToUse[winnerPlayer] : null,
           isDraw: draw,
@@ -250,28 +282,6 @@ export default function TicTacToePage() {
     }
   };
 
-  const saveGameResult = async (winner: Player, isDraw: boolean) => {
-    try {
-      const result = isDraw ? 'draw' : 'win';
-      await fetch('/api/game-history', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: Date.now().toString(),
-          gameType: 'tic-tac-toe',
-          playerX: playerNames.X,
-          playerO: playerNames.O,
-          winner: winner ? playerNames[winner] : null,
-          result,
-        }),
-      });
-      // Refresh stats after saving
-      fetchGameStats();
-    } catch (error) {
-      console.error('Error saving game result:', error);
-    }
-  };
-
   const checkWinner = (newBoard: Board): Player => {
     for (const combo of WINNING_COMBINATIONS) {
       const [a, b, c] = combo;
@@ -289,10 +299,12 @@ export default function TicTacToePage() {
     // 2. Game is over
     // 3. It's not the player's turn
     if (board[index] || winner || isDraw) return;
-    if (myPlayer !== currentPlayer) return; // Turn validation!
+    if (myPlayer !== currentPlayer) return;
 
     const newBoard = [...board];
     newBoard[index] = currentPlayer;
+
+    // Optimistic UI update
     setBoard(newBoard);
 
     const gameWinner = checkWinner(newBoard);
@@ -301,18 +313,16 @@ export default function TicTacToePage() {
     if (gameWinner) {
       setWinner(gameWinner);
       await saveGameState(gameId, newBoard, nextPlayer, gameWinner, false);
-      saveGameResult(gameWinner, false);
       // Clear the game from active games after a delay
       setTimeout(async () => {
-        await fetch(`/api/active-game?id=${gameId}`, { method: 'DELETE' });
+        await fetch(`/api/game-action?id=${gameId}`, { method: 'DELETE' });
       }, 3000);
     } else if (newBoard.every(cell => cell !== null)) {
       setIsDraw(true);
       await saveGameState(gameId, newBoard, nextPlayer, null, true);
-      saveGameResult(null, true);
       // Clear the game from active games after a delay
       setTimeout(async () => {
-        await fetch(`/api/active-game?id=${gameId}`, { method: 'DELETE' });
+        await fetch(`/api/game-action?id=${gameId}`, { method: 'DELETE' });
       }, 3000);
     } else {
       setCurrentPlayer(nextPlayer);
@@ -342,7 +352,7 @@ export default function TicTacToePage() {
   const acceptNewGameRequest = async () => {
     // Delete old game and create new one
     if (gameId) {
-      await fetch(`/api/active-game?id=${gameId}`, { method: 'DELETE' });
+      await fetch(`/api/game-action?id=${gameId}`, { method: 'DELETE' });
     }
 
     // Reset local state
@@ -379,6 +389,11 @@ export default function TicTacToePage() {
             Tic Tac Toe
           </h1>
           <p className="text-slate-600">Crosses vs Knots</p>
+          {/* Connection indicator */}
+          <div className="mt-2 text-xs text-slate-500">
+            <span className={`inline-block w-2 h-2 rounded-full mr-1 ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></span>
+            {isConnected ? 'Connected' : 'Reconnecting...'}
+          </div>
         </motion.div>
 
         {/* All-Time Stats */}
@@ -490,7 +505,7 @@ export default function TicTacToePage() {
                       <FontAwesomeIcon icon={winner === 'X' ? faXmark : faCircle} />
                     </div>
                     <div className="text-2xl font-bold text-slate-900">
-                      Wins!
+                      {playerNames[winner]} Wins!
                     </div>
                   </>
                 ) : (
@@ -525,8 +540,8 @@ export default function TicTacToePage() {
                     : cell
                     ? 'bg-gradient-to-br from-slate-50 to-slate-100 shadow-md'
                     : 'bg-gradient-to-br from-slate-50 to-gray-100 hover:from-slate-100 hover:to-gray-200 shadow-md hover:shadow-xl'
-                } ${!cell && !winner && !isDraw ? 'cursor-pointer' : 'cursor-not-allowed'}`}
-                disabled={!!cell || !!winner || isDraw}
+                } ${!cell && !winner && !isDraw && myPlayer === currentPlayer ? 'cursor-pointer' : 'cursor-not-allowed'}`}
+                disabled={!!cell || !!winner || isDraw || myPlayer !== currentPlayer}
               >
                 <AnimatePresence mode="wait">
                   {cell && (

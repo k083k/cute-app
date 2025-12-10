@@ -1,4 +1,4 @@
-import { sql } from '@vercel/postgres';
+import { sql } from '@/lib/db';
 import { NextResponse } from 'next/server';
 
 // Create table if it doesn't exist
