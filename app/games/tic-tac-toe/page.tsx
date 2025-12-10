@@ -88,10 +88,8 @@ export default function TicTacToePage() {
           setPlayerNames(names);
           setMyPlayer('O');
           // Update the game with the second player's name
-          console.log('Second player joining, updating game with names:', names);
           await saveGameState(data.game.id, JSON.parse(data.game.board), data.game.current_turn as 'X' | 'O', null, false, names);
         } else {
-          console.log('Loading existing game with names:', names);
           setPlayerNames(names);
 
           // Determine which player this user is
@@ -131,12 +129,9 @@ export default function TicTacToePage() {
 
       if (data.game && data.game.id === gameId) {
         const newBoard = JSON.parse(data.game.board);
-        setBoard(newBoard);
-        setCurrentPlayer(data.game.current_turn as 'X' | 'O');
 
         // Update player names if second player joined
         const names = { X: data.game.player_x, O: data.game.player_o };
-        console.log('Syncing game state, player names:', names);
         setPlayerNames(names);
 
         // Update myPlayer if it changed (second player joining)
@@ -150,6 +145,8 @@ export default function TicTacToePage() {
         if (data.game.winner) {
           const winnerSymbol = data.game.winner === names.X ? 'X' : data.game.winner === names.O ? 'O' : null;
           if (winnerSymbol) {
+            // Set board BEFORE setting winner to ensure the winning piece is visible
+            setBoard(newBoard);
             setWinner(winnerSymbol);
             // Also calculate winning line
             const gameBoard = newBoard;
@@ -161,7 +158,12 @@ export default function TicTacToePage() {
               }
             }
           }
+        } else {
+          // Only update board and current player if no winner
+          setBoard(newBoard);
+          setCurrentPlayer(data.game.current_turn as 'X' | 'O');
         }
+
         if (data.game.is_draw) {
           setIsDraw(true);
         }
