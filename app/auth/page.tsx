@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useRouter } from 'next/navigation';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 
 export default function AuthPage() {
@@ -14,7 +13,6 @@ export default function AuthPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const router = useRouter();
 
   useEffect(() => {
     checkSetup();
@@ -54,8 +52,8 @@ export default function AuthPage() {
         });
 
         if (loginResponse.ok) {
-          router.push('/');
-          router.refresh();
+          // Use window.location for hard redirect to ensure session is loaded
+          window.location.href = '/';
         } else {
           setError('Account created but login failed. Please login manually.');
         }
@@ -84,8 +82,8 @@ export default function AuthPage() {
       const data = await response.json();
 
       if (response.ok) {
-        router.push('/');
-        router.refresh();
+        // Use window.location for hard redirect to ensure session is loaded
+        window.location.href = '/';
       } else {
         setError(data.error || 'Login failed');
       }

@@ -39,13 +39,15 @@ export default function TicTacToePage() {
   useEffect(() => {
     checkAuthAndAssignPlayer();
     fetchGameStats();
+  }, []);
 
-    // Poll for game updates every 2 seconds
+  useEffect(() => {
+    // Poll for game updates every 500ms for near real-time feedback
+    if (!gameId) return;
+
     const interval = setInterval(() => {
-      if (gameId) {
-        syncGameState();
-      }
-    }, 2000);
+      syncGameState();
+    }, 500);
 
     return () => clearInterval(interval);
   }, [gameId]);
@@ -86,8 +88,10 @@ export default function TicTacToePage() {
           setPlayerNames(names);
           setMyPlayer('O');
           // Update the game with the second player's name
+          console.log('Second player joining, updating game with names:', names);
           await saveGameState(data.game.id, JSON.parse(data.game.board), data.game.current_turn as 'X' | 'O', null, false, names);
         } else {
+          console.log('Loading existing game with names:', names);
           setPlayerNames(names);
 
           // Determine which player this user is
@@ -132,6 +136,7 @@ export default function TicTacToePage() {
 
         // Update player names if second player joined
         const names = { X: data.game.player_x, O: data.game.player_o };
+        console.log('Syncing game state, player names:', names);
         setPlayerNames(names);
 
         // Update myPlayer if it changed (second player joining)
