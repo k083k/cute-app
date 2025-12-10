@@ -129,9 +129,14 @@ export default function TicTacToePage() {
       const data = await response.json();
 
       if (data.game) {
-        // If the game ID changed (e.g., new game started), update our local game ID
+        // If the game ID changed (e.g., new game started), reset all game state
         if (data.game.id !== gameId) {
           setGameId(data.game.id);
+          // Reset game state for new game
+          setWinner(null);
+          setWinningLine([]);
+          setIsDraw(false);
+          setNewGameRequestedBy(null);
         }
 
         const newBoard = JSON.parse(data.game.board);
@@ -153,7 +158,13 @@ export default function TicTacToePage() {
           if (winnerSymbol) {
             // Set board BEFORE setting winner to ensure the winning piece is visible
             setBoard(newBoard);
-            setWinner(winnerSymbol);
+
+            // Update winner state and scores if not already set
+            if (winner !== winnerSymbol) {
+              setWinner(winnerSymbol);
+              setScores(prev => ({ ...prev, [winnerSymbol]: prev[winnerSymbol] + 1 }));
+            }
+
             // Also calculate winning line
             const gameBoard = newBoard;
             for (const combo of WINNING_COMBINATIONS) {
@@ -168,10 +179,19 @@ export default function TicTacToePage() {
           // Only update board and current player if no winner
           setBoard(newBoard);
           setCurrentPlayer(data.game.current_turn as 'X' | 'O');
+          // Clear winner and draw states if they were previously set
+          setWinner(null);
+          setWinningLine([]);
+          setIsDraw(false);
         }
 
         if (data.game.is_draw) {
-          setIsDraw(true);
+          if (!isDraw) {
+            setIsDraw(true);
+            setScores(prev => ({ ...prev, draws: prev.draws + 1 }));
+          }
+        } else {
+          setIsDraw(false);
         }
 
         // Check for new game requests
