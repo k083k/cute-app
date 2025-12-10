@@ -14,6 +14,7 @@ async function ensureTable() {
         current_turn TEXT NOT NULL,
         winner TEXT,
         is_draw BOOLEAN DEFAULT FALSE,
+        new_game_requested_by TEXT,
         updated_at TIMESTAMP DEFAULT NOW()
       )
     `;
@@ -33,7 +34,7 @@ export async function GET(request: NextRequest) {
 
     // Get the most recent active game (including finished games so both players can see the final state)
     const { rows } = await sql`
-      SELECT id, game_type, player_x, player_o, board, current_turn, winner, is_draw, updated_at
+      SELECT id, game_type, player_x, player_o, board, current_turn, winner, is_draw, new_game_requested_by, updated_at
       FROM active_games
       WHERE game_type = ${gameType}
       ORDER BY updated_at DESC
@@ -60,7 +61,7 @@ export async function POST(request: NextRequest) {
     await ensureTable();
 
     const body = await request.json();
-    const { id, gameType, playerX, playerO, board, currentTurn, winner, isDraw } = body;
+    const { id, gameType, playerX, playerO, board, currentTurn, winner, isDraw, newGameRequestedBy } = body;
 
     if (!id || !gameType || !playerX || !playerO || !board || !currentTurn) {
       return NextResponse.json(
@@ -84,14 +85,15 @@ export async function POST(request: NextRequest) {
             player_o = ${playerO},
             winner = ${winner || null},
             is_draw = ${isDraw || false},
+            new_game_requested_by = ${newGameRequestedBy || null},
             updated_at = NOW()
         WHERE id = ${id}
       `;
     } else {
       // Create new game
       await sql`
-        INSERT INTO active_games (id, game_type, player_x, player_o, board, current_turn, winner, is_draw, updated_at)
-        VALUES (${id}, ${gameType}, ${playerX}, ${playerO}, ${board}, ${currentTurn}, ${winner || null}, ${isDraw || false}, NOW())
+        INSERT INTO active_games (id, game_type, player_x, player_o, board, current_turn, winner, is_draw, new_game_requested_by, updated_at)
+        VALUES (${id}, ${gameType}, ${playerX}, ${playerO}, ${board}, ${currentTurn}, ${winner || null}, ${isDraw || false}, ${newGameRequestedBy || null}, NOW())
       `;
     }
 

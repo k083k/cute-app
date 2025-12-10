@@ -35,6 +35,7 @@ export default function TicTacToePage() {
   const [myPlayer, setMyPlayer] = useState<'X' | 'O' | null>(null);
   const [playerNames, setPlayerNames] = useState<{ X: string; O: string }>({ X: '', O: '' });
   const [currentUserName, setCurrentUserName] = useState<string>('');
+  const [newGameRequestedBy, setNewGameRequestedBy] = useState<string | null>(null);
 
   useEffect(() => {
     checkAuthAndAssignPlayer();
@@ -167,6 +168,13 @@ export default function TicTacToePage() {
         if (data.game.is_draw) {
           setIsDraw(true);
         }
+
+        // Check for new game requests
+        if (data.game.new_game_requested_by) {
+          setNewGameRequestedBy(data.game.new_game_requested_by);
+        } else {
+          setNewGameRequestedBy(null);
+        }
       }
     } catch (error) {
       console.error('Error syncing game state:', error);
@@ -179,7 +187,8 @@ export default function TicTacToePage() {
     turn: 'X' | 'O',
     winnerPlayer: Player,
     draw: boolean,
-    names?: { X: string; O: string }
+    names?: { X: string; O: string },
+    requestNewGameBy?: string | null
   ) => {
     try {
       const playerNamesToUse = names || playerNames;
@@ -195,6 +204,7 @@ export default function TicTacToePage() {
           currentTurn: turn,
           winner: winnerPlayer ? playerNamesToUse[winnerPlayer] : null,
           isDraw: draw,
+          newGameRequestedBy: requestNewGameBy !== undefined ? requestNewGameBy : newGameRequestedBy,
         }),
       });
     } catch (error) {
@@ -286,26 +296,43 @@ export default function TicTacToePage() {
     }
   };
 
-  const resetGame = async () => {
-    setBoard(Array(9).fill(null));
-    setCurrentPlayer('X');
-    setWinner(null);
-    setWinningLine([]);
-    setIsDraw(false);
+  const handleStartNewGame = async () => {
+    // If there's already a request from me, cancel it
+    if (newGameRequestedBy === currentUserName) {
+      await saveGameState(gameId, board, currentPlayer, winner, isDraw, undefined, null);
+      setNewGameRequestedBy(null);
+      return;
+    }
 
+    // If the other player requested, accept and start new game
+    if (newGameRequestedBy && newGameRequestedBy !== currentUserName) {
+      await acceptNewGameRequest();
+      return;
+    }
+
+    // Otherwise, send a new game request
+    await saveGameState(gameId, board, currentPlayer, winner, isDraw, undefined, currentUserName);
+    setNewGameRequestedBy(currentUserName);
+  };
+
+  const acceptNewGameRequest = async () => {
     // Delete old game and create new one
     if (gameId) {
       await fetch(`/api/active-game?id=${gameId}`, { method: 'DELETE' });
     }
 
+    // Reset local state
+    setBoard(Array(9).fill(null));
+    setCurrentPlayer('X');
+    setWinner(null);
+    setWinningLine([]);
+    setIsDraw(false);
+    setNewGameRequestedBy(null);
+
+    // Create new game
     const newGameId = Date.now().toString();
     setGameId(newGameId);
-    await saveGameState(newGameId, Array(9).fill(null), 'X', null, false);
-  };
-
-  const resetScores = () => {
-    setScores({ 'X': 0, 'O': 0, draws: 0 });
-    resetGame();
+    await saveGameState(newGameId, Array(9).fill(null), 'X', null, false, undefined, null);
   };
 
   return (
@@ -393,6 +420,36 @@ export default function TicTacToePage() {
                   </div>
                 </div>
               ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* New Game Request Notification */}
+        {newGameRequestedBy && newGameRequestedBy !== currentUserName && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center mb-4"
+          >
+            <div className="inline-flex items-center gap-3 px-6 py-3 bg-blue-50 border-2 border-blue-400 rounded-full shadow-lg">
+              <span className="text-lg font-medium text-blue-900">
+                {newGameRequestedBy} wants to start a new game
+              </span>
+            </div>
+          </motion.div>
+        )}
+
+        {/* My Request Indicator */}
+        {newGameRequestedBy === currentUserName && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center mb-4"
+          >
+            <div className="inline-flex items-center gap-3 px-6 py-3 bg-amber-50 border-2 border-amber-400 rounded-full shadow-lg">
+              <span className="text-lg font-medium text-amber-900">
+                Waiting for opponent to accept...
+              </span>
             </div>
           </motion.div>
         )}
@@ -498,24 +555,28 @@ export default function TicTacToePage() {
           </div>
         </motion.div>
 
-        {/* Action Buttons */}
+        {/* Start New Game Button */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="flex gap-4 justify-center"
         >
           <button
-            onClick={resetGame}
-            className="flex items-center gap-2 px-6 py-3 bg-slate-800 text-white rounded-full font-medium shadow-lg hover:shadow-xl hover:scale-105 hover:bg-slate-900 transition-all"
+            onClick={handleStartNewGame}
+            className={`flex items-center gap-2 px-6 py-3 rounded-full font-medium shadow-lg hover:shadow-xl hover:scale-105 transition-all ${
+              newGameRequestedBy && newGameRequestedBy !== currentUserName
+                ? 'bg-green-600 hover:bg-green-700 text-white'
+                : newGameRequestedBy === currentUserName
+                ? 'bg-amber-600 hover:bg-amber-700 text-white'
+                : 'bg-slate-800 hover:bg-slate-900 text-white'
+            }`}
           >
             <ArrowPathIcon className="w-5 h-5" />
-            New Game
-          </button>
-          <button
-            onClick={resetScores}
-            className="px-6 py-3 bg-white/80 backdrop-blur-sm text-slate-700 rounded-full font-medium shadow-lg hover:shadow-xl hover:scale-105 transition-all border border-slate-200"
-          >
-            Reset Scores
+            {newGameRequestedBy && newGameRequestedBy !== currentUserName
+              ? 'Accept New Game'
+              : newGameRequestedBy === currentUserName
+              ? 'Cancel Request'
+              : 'Start New Game'}
           </button>
         </motion.div>
       </div>
