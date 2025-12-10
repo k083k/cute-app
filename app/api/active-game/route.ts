@@ -31,13 +31,11 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const gameType = searchParams.get('gameType') || 'tic-tac-toe';
 
-    // Get the most recent active game (not finished)
+    // Get the most recent active game (including finished games so both players can see the final state)
     const { rows } = await sql`
       SELECT id, game_type, player_x, player_o, board, current_turn, winner, is_draw, updated_at
       FROM active_games
       WHERE game_type = ${gameType}
-        AND winner IS NULL
-        AND is_draw = FALSE
       ORDER BY updated_at DESC
       LIMIT 1
     `;
