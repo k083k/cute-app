@@ -54,16 +54,6 @@ export default function NotesPage() {
     localStorage.setItem('lastNotesVisit', new Date().toISOString());
   }, []);
 
-  const getRandomPosition = () => {
-    // Random position within viewport
-    const maxX = typeof window !== 'undefined' ? Math.min(window.innerWidth - 300, 1000) : 800;
-    const maxY = typeof window !== 'undefined' ? Math.min(window.innerHeight - 300, 600) : 500;
-    return {
-      x: Math.random() * maxX,
-      y: Math.random() * maxY,
-    };
-  };
-
   const getRandomRotation = () => {
     return Math.random() * 10 - 5; // -5 to 5 degrees
   };
@@ -71,14 +61,13 @@ export default function NotesPage() {
   const handleAddNote = async () => {
     if (!newNote.content.trim() || !newNote.author.trim()) return;
 
-    const position = getRandomPosition();
     const note: StickyNote = {
       id: Date.now().toString(),
       content: newNote.content,
       author: newNote.author,
       color: COLORS[newNote.color].name,
-      x: position.x,
-      y: position.y,
+      x: 0, // Not used anymore but keeping for DB compatibility
+      y: 0, // Not used anymore but keeping for DB compatibility
       rotation: getRandomRotation(),
       createdAt: new Date().toISOString(),
     };
@@ -131,29 +120,6 @@ export default function NotesPage() {
     }
   };
 
-  const handleDragEnd = async (noteId: string, event: any, info: any) => {
-    const note = notes.find(n => n.id === noteId);
-    if (!note) return;
-
-    const newX = note.x + info.offset.x;
-    const newY = note.y + info.offset.y;
-
-    // Update local state
-    setNotes(notes.map(n =>
-      n.id === noteId ? { ...n, x: newX, y: newY } : n
-    ));
-
-    // Update database
-    try {
-      await fetch('/api/notes', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: noteId, x: newX, y: newY }),
-      });
-    } catch (error) {
-      console.error('Error updating note position:', error);
-    }
-  };
 
   const getColorClasses = (colorName: string) => {
     const color = COLORS.find(c => c.name === colorName) || COLORS[0];
@@ -278,12 +244,12 @@ export default function NotesPage() {
       )}
 
       {/* Sticky Notes Board */}
-      <div className="relative max-w-7xl mx-auto" style={{ minHeight: '600px' }}>
+      <div className="max-w-7xl mx-auto">
         {notes.length === 0 && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="absolute inset-0 flex items-center justify-center"
+            className="flex items-center justify-center py-20"
           >
             <div className="text-center">
               <p className="text-slate-400 text-lg mb-4">No notes yet!</p>
@@ -292,62 +258,57 @@ export default function NotesPage() {
           </motion.div>
         )}
 
-        {notes.map((note, index) => {
-          const colorClasses = getColorClasses(note.color);
-          return (
-            <motion.div
-              key={note.id}
-              initial={{ opacity: 0, scale: 0.8, rotate: 0 }}
-              animate={{
-                opacity: 1,
-                scale: 1,
-                rotate: note.rotation,
-              }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              drag
-              dragConstraints={{ left: 0, right: 800, top: 0, bottom: 600 }}
-              dragElastic={0.1}
-              onDragEnd={(event, info) => handleDragEnd(note.id, event, info)}
-              whileHover={{ scale: 1.05, rotate: 0, zIndex: 100 }}
-              onClick={() => setSelectedNote(note)}
-              className={`group absolute w-64 h-64 ${colorClasses.bg} ${colorClasses.border} border-2 rounded-sm shadow-lg cursor-pointer p-6 transition-shadow hover:shadow-2xl`}
-              style={{
-                left: `${note.x}px`,
-                top: `${note.y}px`,
-              }}
-            >
-              {/* Delete button */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDeleteNote(note.id);
+        {/* Responsive Grid Layout */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 auto-rows-auto">
+          {notes.map((note, index) => {
+            const colorClasses = getColorClasses(note.color);
+            return (
+              <motion.div
+                key={note.id}
+                initial={{ opacity: 0, scale: 0.8, rotate: 0 }}
+                animate={{
+                  opacity: 1,
+                  scale: 1,
+                  rotate: note.rotation,
                 }}
-                className="delete-btn absolute top-2 right-2 p-1 opacity-0 group-hover:opacity-100 transition-all z-10 group/delete"
-                title="Delete note"
+                exit={{ opacity: 0, scale: 0.8 }}
+                whileHover={{ scale: 1.05, rotate: 0, zIndex: 100 }}
+                onClick={() => setSelectedNote(note)}
+                className={`group relative w-full aspect-square ${colorClasses.bg} ${colorClasses.border} border-2 rounded-sm shadow-lg cursor-pointer p-6 transition-all hover:shadow-2xl`}
               >
-                <TrashIcon className="w-5 h-5 text-gray-600 group-hover/delete:hidden transition-colors" />
-                <TrashIconSolid className="w-5 h-5 text-red-500 hidden group-hover/delete:block" />
-              </button>
+                {/* Delete button */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteNote(note.id);
+                  }}
+                  className="delete-btn absolute top-2 right-2 p-1 opacity-0 group-hover:opacity-100 transition-all z-10 group/delete"
+                  title="Delete note"
+                >
+                  <TrashIcon className="w-5 h-5 text-gray-600 group-hover/delete:hidden transition-colors" />
+                  <TrashIconSolid className="w-5 h-5 text-red-500 hidden group-hover/delete:block" />
+                </button>
 
-              {/* Note content */}
-              <div className="h-full flex flex-col">
-                <p className="flex-1 text-gray-900 text-sm leading-relaxed overflow-auto">
-                  {note.content}
-                </p>
-
-                <div className="border-t border-gray-400 pt-2 mt-2">
-                  <p className="text-xs text-gray-700 font-medium">— {note.author}</p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {new Date(note.createdAt).toLocaleDateString()}
+                {/* Note content */}
+                <div className="h-full flex flex-col">
+                  <p className="flex-1 text-gray-900 text-sm leading-relaxed overflow-hidden line-clamp-6">
+                    {note.content}
                   </p>
-                </div>
-              </div>
 
-              {/* Tape effect */}
-              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 w-16 h-6 bg-slate-200/50 rotate-0" />
-            </motion.div>
-          );
-        })}
+                  <div className="border-t border-gray-400 pt-2 mt-2">
+                    <p className="text-xs text-gray-700 font-medium">— {note.author}</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {new Date(note.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Tape effect */}
+                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 w-16 h-6 bg-slate-200/50 rotate-0" />
+              </motion.div>
+            );
+          })}
+        </div>
       </div>
 
       {/* Expanded Note Modal */}
@@ -392,10 +353,6 @@ export default function NotesPage() {
         </motion.div>
       )}
 
-      {/* Mobile warning */}
-      <div className="md:hidden fixed bottom-4 left-4 right-4 bg-slate-800 text-white p-4 rounded-lg shadow-lg">
-        <p className="text-sm">💡 Tip: Drag notes to rearrange them on the board!</p>
-      </div>
     </div>
   );
 }

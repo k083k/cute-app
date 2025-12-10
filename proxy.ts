@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-// This middleware will block all bots and crawlers
+// This proxy will block all bots and crawlers
 export function middleware(request: NextRequest) {
   const userAgent = request.headers.get('user-agent') || '';
 
