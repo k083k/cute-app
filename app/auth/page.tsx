@@ -7,6 +7,8 @@ import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 
 export default function AuthPage() {
   const [isSetup, setIsSetup] = useState<boolean | null>(null);
+  const [userCount, setUserCount] = useState(0);
+  const [showSignup, setShowSignup] = useState(false);
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -23,6 +25,7 @@ export default function AuthPage() {
       const response = await fetch('/api/users');
       const data = await response.json();
       setIsSetup(data.isSetup);
+      setUserCount(data.users?.length || 0);
     } catch (error) {
       console.error('Failed to check setup:', error);
     }
@@ -43,8 +46,19 @@ export default function AuthPage() {
       const data = await response.json();
 
       if (response.ok) {
-        // Now login with the password
-        await handleLogin();
+        // Login automatically with the just-created account
+        const loginResponse = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password }),
+        });
+
+        if (loginResponse.ok) {
+          router.push('/');
+          router.refresh();
+        } else {
+          setError('Account created but login failed. Please login manually.');
+        }
       } else {
         setError(data.error || 'Setup failed');
       }
@@ -90,6 +104,8 @@ export default function AuthPage() {
     );
   }
 
+  const isSignupMode = !isSetup || showSignup;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100 flex items-center justify-center px-4 py-12">
       <motion.div
@@ -102,17 +118,17 @@ export default function AuthPage() {
 
           {/* Title */}
           <h1 className="text-3xl font-bold text-center text-slate-900 mb-2">
-            {isSetup ? 'Welcome Back' : 'Create Your Password'}
+            {isSignupMode ? 'Create Your Account' : 'Welcome Back'}
           </h1>
           <p className="text-center text-slate-600 mb-8">
-            {isSetup
-              ? 'Enter your password to continue'
-              : 'Set up your password to get started'}
+            {isSignupMode
+              ? 'Set up your account to get started'
+              : 'Enter your password to continue'}
           </p>
 
           {/* Form */}
-          <form onSubmit={isSetup ? handleLogin : handleSetup} className="space-y-6">
-            {!isSetup && (
+          <form onSubmit={isSignupMode ? handleSetup : handleLogin} className="space-y-6">
+            {isSignupMode && (
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
                   Your Name
@@ -171,9 +187,27 @@ export default function AuthPage() {
               disabled={isLoading}
               className="w-full py-3 bg-slate-800 text-white rounded-xl font-medium shadow-lg hover:bg-slate-900 hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? 'Please wait...' : isSetup ? 'Login' : 'Create Password'}
+              {isLoading ? 'Please wait...' : isSignupMode ? 'Create Account' : 'Login'}
             </button>
           </form>
+
+          {/* Toggle between login and signup */}
+          {isSetup && userCount < 2 && (
+            <div className="mt-6 text-center">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowSignup(!showSignup);
+                  setError('');
+                  setName('');
+                  setPassword('');
+                }}
+                className="text-sm text-slate-600 hover:text-slate-900 transition-colors"
+              >
+                {showSignup ? 'Already have an account? Login' : "Don't have an account? Sign up"}
+              </button>
+            </div>
+          )}
         </div>
       </motion.div>
     </div>
