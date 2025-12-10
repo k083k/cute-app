@@ -30,6 +30,8 @@ export default function NotesPage() {
   const [newNote, setNewNote] = useState({ content: '', author: '', color: 0 });
   const [mounted, setMounted] = useState(false);
   const [selectedNote, setSelectedNote] = useState<StickyNote | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userName, setUserName] = useState('');
 
   // Fetch notes from database
   const fetchNotes = async () => {
@@ -44,8 +46,26 @@ export default function NotesPage() {
     }
   };
 
+  // Check authentication
+  const checkAuth = async () => {
+    try {
+      const response = await fetch('/api/auth/check');
+      const data = await response.json();
+      if (data.isAuthenticated && data.user) {
+        setIsAuthenticated(true);
+        setUserName(data.user.name);
+        setNewNote(prev => ({ ...prev, author: data.user.name }));
+      }
+    } catch (error) {
+      console.error('Error checking auth:', error);
+    }
+  };
+
   useEffect(() => {
     setMounted(true);
+
+    // Check authentication
+    checkAuth();
 
     // Fetch notes from database
     fetchNotes();
@@ -59,12 +79,14 @@ export default function NotesPage() {
   };
 
   const handleAddNote = async () => {
-    if (!newNote.content.trim() || !newNote.author.trim()) return;
+    // Use userName if authenticated, otherwise require author field
+    const authorName = isAuthenticated ? userName : newNote.author;
+    if (!newNote.content.trim() || !authorName.trim()) return;
 
     const note: StickyNote = {
       id: Date.now().toString(),
       content: newNote.content,
-      author: newNote.author,
+      author: authorName,
       color: COLORS[newNote.color].name,
       x: 0, // Not used anymore but keeping for DB compatibility
       y: 0, // Not used anymore but keeping for DB compatibility
@@ -180,18 +202,28 @@ export default function NotesPage() {
             <h2 className="text-2xl font-bold text-slate-900 mb-4">New Sticky Note</h2>
 
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Your Name
-                </label>
-                <input
-                  type="text"
-                  value={newNote.author}
-                  onChange={(e) => setNewNote({ ...newNote, author: e.target.value })}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent"
-                  placeholder="e.g., Ansaa, You, etc."
-                />
-              </div>
+              {!isAuthenticated && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Your Name
+                  </label>
+                  <input
+                    type="text"
+                    value={newNote.author}
+                    onChange={(e) => setNewNote({ ...newNote, author: e.target.value })}
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent"
+                    placeholder="e.g., Ansaa, You, etc."
+                  />
+                </div>
+              )}
+
+              {isAuthenticated && (
+                <div className="bg-slate-50 border border-slate-200 rounded-lg px-4 py-3">
+                  <p className="text-sm text-slate-600">
+                    Posting as <span className="font-semibold text-slate-900">{userName}</span>
+                  </p>
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
@@ -232,8 +264,8 @@ export default function NotesPage() {
                 </button>
                 <button
                   onClick={handleAddNote}
-                  className="flex-1 px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-900 transition-colors"
-                  disabled={!newNote.content.trim() || !newNote.author.trim()}
+                  className="flex-1 px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={!newNote.content.trim() || (!isAuthenticated && !newNote.author.trim())}
                 >
                   Add Note
                 </button>

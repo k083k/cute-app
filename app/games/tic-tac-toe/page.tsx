@@ -3,9 +3,11 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowPathIcon, HomeIcon } from '@heroicons/react/24/outline';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faXmark, faCircle } from '@fortawesome/free-solid-svg-icons';
 import Link from 'next/link';
 
-type Player = '❤️' | '⭐' | null;
+type Player = 'X' | 'O' | null;
 type Board = Player[];
 
 const WINNING_COMBINATIONS = [
@@ -16,11 +18,11 @@ const WINNING_COMBINATIONS = [
 
 export default function TicTacToePage() {
   const [board, setBoard] = useState<Board>(Array(9).fill(null));
-  const [currentPlayer, setCurrentPlayer] = useState<'❤️' | '⭐'>('❤️');
+  const [currentPlayer, setCurrentPlayer] = useState<'X' | 'O'>('X');
   const [winner, setWinner] = useState<Player>(null);
   const [winningLine, setWinningLine] = useState<number[]>([]);
   const [isDraw, setIsDraw] = useState(false);
-  const [scores, setScores] = useState({ '❤️': 0, '⭐': 0, draws: 0 });
+  const [scores, setScores] = useState({ 'X': 0, 'O': 0, draws: 0 });
 
   const checkWinner = (newBoard: Board): Player => {
     for (const combo of WINNING_COMBINATIONS) {
@@ -48,25 +50,25 @@ export default function TicTacToePage() {
       setIsDraw(true);
       setScores(prev => ({ ...prev, draws: prev.draws + 1 }));
     } else {
-      setCurrentPlayer(currentPlayer === '❤️' ? '⭐' : '❤️');
+      setCurrentPlayer(currentPlayer === 'X' ? 'O' : 'X');
     }
   };
 
   const resetGame = () => {
     setBoard(Array(9).fill(null));
-    setCurrentPlayer('❤️');
+    setCurrentPlayer('X');
     setWinner(null);
     setWinningLine([]);
     setIsDraw(false);
   };
 
   const resetScores = () => {
-    setScores({ '❤️': 0, '⭐': 0, draws: 0 });
+    setScores({ 'X': 0, 'O': 0, draws: 0 });
     resetGame();
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-pink-50 py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100 py-8 px-4">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <motion.div
@@ -76,37 +78,41 @@ export default function TicTacToePage() {
         >
           <Link
             href="/games"
-            className="inline-flex items-center gap-2 text-slate-600 hover:text-violet-600 transition-colors mb-4"
+            className="inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors mb-4"
           >
             <HomeIcon className="w-5 h-5" />
             <span className="text-sm font-medium">Back to Games</span>
           </Link>
-          <h1 className="text-5xl font-bold bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent mb-2">
+          <h1 className="text-5xl font-bold text-slate-900 mb-2">
             Tic Tac Toe
           </h1>
-          <p className="text-slate-600">Hearts vs Stars</p>
+          <p className="text-slate-600">Crosses vs Knots</p>
         </motion.div>
 
         {/* Score Board */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-violet-200 p-6 mb-8"
+          className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-slate-200 p-6 mb-8"
         >
           <div className="grid grid-cols-3 gap-4 text-center">
-            <div className="p-4 rounded-2xl bg-gradient-to-br from-pink-100 to-pink-50">
-              <div className="text-3xl mb-1">❤️</div>
-              <div className="text-2xl font-bold text-pink-600">{scores['❤️']}</div>
-              <div className="text-xs text-pink-600/60 font-medium">Hearts</div>
-            </div>
             <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-50">
+              <div className="text-3xl mb-1 text-slate-800">
+                <FontAwesomeIcon icon={faXmark} />
+              </div>
+              <div className="text-2xl font-bold text-slate-800">{scores['X']}</div>
+              <div className="text-xs text-slate-500 font-medium">Crosses</div>
+            </div>
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-50">
               <div className="text-lg mb-1 text-slate-400">Draws</div>
               <div className="text-2xl font-bold text-slate-600">{scores.draws}</div>
             </div>
-            <div className="p-4 rounded-2xl bg-gradient-to-br from-violet-100 to-violet-50">
-              <div className="text-3xl mb-1">⭐</div>
-              <div className="text-2xl font-bold text-violet-600">{scores['⭐']}</div>
-              <div className="text-xs text-violet-600/60 font-medium">Stars</div>
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-50">
+              <div className="text-3xl mb-1 text-slate-800">
+                <FontAwesomeIcon icon={faCircle} className="fa-regular" />
+              </div>
+              <div className="text-2xl font-bold text-slate-800">{scores['O']}</div>
+              <div className="text-xs text-slate-500 font-medium">Knots</div>
             </div>
           </div>
         </motion.div>
@@ -119,10 +125,12 @@ export default function TicTacToePage() {
             animate={{ opacity: 1, scale: 1 }}
             className="text-center mb-6"
           >
-            <div className="inline-flex items-center gap-3 px-6 py-3 bg-white/80 backdrop-blur-sm rounded-full shadow-lg border border-violet-200">
-              <span className="text-3xl">{currentPlayer}</span>
+            <div className="inline-flex items-center gap-3 px-6 py-3 bg-white/80 backdrop-blur-sm rounded-full shadow-lg border border-slate-200">
+              <span className="text-3xl text-slate-800">
+                <FontAwesomeIcon icon={currentPlayer === 'X' ? faXmark : faCircle} />
+              </span>
               <span className="text-lg font-medium text-slate-700">
-                {currentPlayer === '❤️' ? "Heart's turn" : "Star's turn"}
+                {currentPlayer === 'X' ? "Cross's turn" : "Knot's turn"}
               </span>
             </div>
           </motion.div>
@@ -137,11 +145,13 @@ export default function TicTacToePage() {
               exit={{ opacity: 0, scale: 0.8 }}
               className="text-center mb-6"
             >
-              <div className="inline-flex flex-col items-center gap-2 px-8 py-6 bg-gradient-to-br from-white to-violet-50 backdrop-blur-sm rounded-3xl shadow-2xl border-2 border-violet-300">
+              <div className="inline-flex flex-col items-center gap-2 px-8 py-6 bg-white backdrop-blur-sm rounded-3xl shadow-2xl border-2 border-slate-300">
                 {winner ? (
                   <>
-                    <div className="text-6xl mb-2">{winner}</div>
-                    <div className="text-2xl font-bold bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
+                    <div className="text-6xl mb-2 text-slate-800">
+                      <FontAwesomeIcon icon={winner === 'X' ? faXmark : faCircle} />
+                    </div>
+                    <div className="text-2xl font-bold text-slate-900">
                       Wins!
                     </div>
                   </>
@@ -162,7 +172,7 @@ export default function TicTacToePage() {
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl border border-violet-200 p-8 mb-6"
+          className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl border border-slate-200 p-8 mb-6"
         >
           <div className="grid grid-cols-3 gap-4">
             {board.map((cell, index) => (
@@ -171,24 +181,29 @@ export default function TicTacToePage() {
                 whileHover={{ scale: cell ? 1 : 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => handleCellClick(index)}
-                className={`aspect-square rounded-2xl text-6xl font-bold transition-all duration-300 ${
+                className={`aspect-square rounded-2xl text-6xl font-bold text-slate-800 transition-all duration-300 ${
                   winningLine.includes(index)
-                    ? 'bg-gradient-to-br from-violet-200 to-purple-200 shadow-lg scale-105'
+                    ? 'bg-gradient-to-br from-slate-200 to-slate-300 shadow-lg scale-105'
                     : cell
                     ? 'bg-gradient-to-br from-slate-50 to-slate-100 shadow-md'
-                    : 'bg-gradient-to-br from-violet-50 to-purple-50 hover:from-violet-100 hover:to-purple-100 shadow-md hover:shadow-xl'
+                    : 'bg-gradient-to-br from-slate-50 to-gray-100 hover:from-slate-100 hover:to-gray-200 shadow-md hover:shadow-xl'
                 } ${!cell && !winner && !isDraw ? 'cursor-pointer' : 'cursor-not-allowed'}`}
                 disabled={!!cell || !!winner || isDraw}
               >
                 <AnimatePresence mode="wait">
                   {cell && (
                     <motion.span
-                      initial={{ scale: 0, rotate: -180 }}
+                      initial={{ scale: 0, rotate: 360 }}
                       animate={{ scale: 1, rotate: 0 }}
-                      exit={{ scale: 0, rotate: 180 }}
-                      transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+                      exit={{ scale: 0, rotate: -360 }}
+                      transition={{
+                        type: 'spring',
+                        stiffness: 200,
+                        damping: 15,
+                        duration: 0.5
+                      }}
                     >
-                      {cell}
+                      <FontAwesomeIcon icon={cell === 'X' ? faXmark : faCircle} />
                     </motion.span>
                   )}
                 </AnimatePresence>
@@ -205,14 +220,14 @@ export default function TicTacToePage() {
         >
           <button
             onClick={resetGame}
-            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-violet-500 to-purple-500 text-white rounded-full font-medium shadow-lg hover:shadow-xl hover:scale-105 transition-all"
+            className="flex items-center gap-2 px-6 py-3 bg-slate-800 text-white rounded-full font-medium shadow-lg hover:shadow-xl hover:scale-105 hover:bg-slate-900 transition-all"
           >
             <ArrowPathIcon className="w-5 h-5" />
             New Game
           </button>
           <button
             onClick={resetScores}
-            className="px-6 py-3 bg-white/80 backdrop-blur-sm text-slate-700 rounded-full font-medium shadow-lg hover:shadow-xl hover:scale-105 transition-all border border-violet-200"
+            className="px-6 py-3 bg-white/80 backdrop-blur-sm text-slate-700 rounded-full font-medium shadow-lg hover:shadow-xl hover:scale-105 transition-all border border-slate-200"
           >
             Reset Scores
           </button>
