@@ -6,6 +6,7 @@ import { SparklesIcon, HeartIcon, StarIcon } from '@heroicons/react/24/solid';
 
 export default function HeroSection() {
   const [greeting, setGreeting] = useState('');
+  const [userName, setUserName] = useState('');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -18,7 +19,22 @@ export default function HeroSection() {
     } else {
       setGreeting('Good Evening');
     }
+
+    // Fetch authenticated user's name
+    fetchUserName();
   }, []);
+
+  const fetchUserName = async () => {
+    try {
+      const response = await fetch('/api/auth/check');
+      const data = await response.json();
+      if (data.isAuthenticated && data.user) {
+        setUserName(data.user.name);
+      }
+    } catch (error) {
+      console.error('Error fetching user name:', error);
+    }
+  };
 
   if (!mounted) {
     return null;
@@ -74,7 +90,7 @@ export default function HeroSection() {
           className="mb-4"
         >
           <span className="inline-block px-6 py-2 bg-slate-100 rounded-full text-sm font-medium text-slate-700 shadow-sm border border-slate-200">
-            {greeting}, Ansaa
+            {greeting}{userName ? `, ${userName}` : ''}
           </span>
         </motion.div>
 

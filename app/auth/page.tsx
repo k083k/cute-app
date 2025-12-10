@@ -204,7 +204,7 @@ export default function AuthPage() {
                 }}
                 className="text-sm text-slate-600 hover:text-slate-900 transition-colors"
               >
-                {showSignup ? 'Already have an account? Login' : "Don't have an account? Sign up"}
+                {showSignup ? 'Already have an account? Login' : "Don't have an account? Create One"}
               </button>
             </div>
           )}

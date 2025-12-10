@@ -212,7 +212,7 @@ export default function NotesPage() {
                     value={newNote.author}
                     onChange={(e) => setNewNote({ ...newNote, author: e.target.value })}
                     className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent"
-                    placeholder="e.g., Ansaa, You, etc."
+                    placeholder="e.g., You, etc."
                   />
                 </div>
               )}

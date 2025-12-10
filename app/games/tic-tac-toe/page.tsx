@@ -141,8 +141,21 @@ export default function TicTacToePage() {
           setMyPlayer('O');
         }
 
+        // Convert winner name to player symbol (X or O)
         if (data.game.winner) {
-          setWinner(data.game.winner as Player);
+          const winnerSymbol = data.game.winner === names.X ? 'X' : data.game.winner === names.O ? 'O' : null;
+          if (winnerSymbol) {
+            setWinner(winnerSymbol);
+            // Also calculate winning line
+            const gameBoard = newBoard;
+            for (const combo of WINNING_COMBINATIONS) {
+              const [a, b, c] = combo;
+              if (gameBoard[a] && gameBoard[a] === gameBoard[b] && gameBoard[a] === gameBoard[c]) {
+                setWinningLine(combo);
+                break;
+              }
+            }
+          }
         }
         if (data.game.is_draw) {
           setIsDraw(true);
