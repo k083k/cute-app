@@ -59,10 +59,11 @@ export default function Navigation() {
               {/* Logo/Title */}
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2 text-slate-900">
-                    <span className="hidden sm:inline">Ama Ansaa Asiedu</span>
-                    <span className="sm:hidden">Ansaa</span>
-                  </h1>
+                  <Link href="/">
+                    <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2 text-slate-900 cursor-pointer hover:text-slate-700 transition-colors">
+                      <span>AAA</span>
+                    </h1>
+                  </Link>
                 </div>
               </div>
 
