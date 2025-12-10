@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Disclosure } from '@headlessui/react';
 import { Bars3Icon, XMarkIcon, GiftIcon, SparklesIcon, PhotoIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
-import { useState, useEffect } from 'react';
 
 const navigation = [
   { name: 'Bible Verse', href: '/', icon: SparklesIcon },
@@ -15,34 +14,8 @@ const navigation = [
 
 export default function Navigation() {
   const pathname = usePathname();
-  const [unreadCount, setUnreadCount] = useState(0);
 
   const isActive = (path: string) => pathname === path;
-
-  useEffect(() => {
-    // Check for unread notes from database
-    const checkUnreadNotes = async () => {
-      try {
-        const response = await fetch('/api/notes');
-        if (response.ok) {
-          const notes = await response.json();
-          const lastVisit = localStorage.getItem('lastNotesVisit');
-
-          if (!lastVisit) {
-            setUnreadCount(notes.length);
-          } else {
-            const lastVisitDate = new Date(lastVisit);
-            const newNotes = notes.filter((note: any) => new Date(note.createdAt) > lastVisitDate);
-            setUnreadCount(newNotes.length);
-          }
-        }
-      } catch (error) {
-        console.error('Error checking unread notes:', error);
-      }
-    };
-
-    checkUnreadNotes();
-  }, [pathname]);
 
   return (
     <Disclosure as="nav" className="glass-slate border-b border-slate-200 shadow-sm sticky top-0 z-50 backdrop-blur-lg bg-white/80">
@@ -77,11 +50,6 @@ export default function Navigation() {
                       >
                         <Icon className="h-5 w-5" />
                         {item.name}
-                        {item.href === '/notes' && unreadCount > 0 && (
-                          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
-                            {unreadCount}
-                          </span>
-                        )}
                       </Link>
                     );
                   })}
@@ -119,11 +87,6 @@ export default function Navigation() {
                   >
                     <Icon className="h-5 w-5" />
                     {item.name}
-                    {item.href === '/notes' && unreadCount > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
-                        {unreadCount}
-                      </span>
-                    )}
                   </Link>
                 );
               })}
