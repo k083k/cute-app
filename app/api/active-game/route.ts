@@ -18,6 +18,17 @@ async function ensureTable() {
         updated_at TIMESTAMP DEFAULT NOW()
       )
     `;
+
+    // Add new_game_requested_by column if it doesn't exist (migration)
+    try {
+      await sql`
+        ALTER TABLE active_games
+        ADD COLUMN IF NOT EXISTS new_game_requested_by TEXT
+      `;
+    } catch (alterError) {
+      // Column might already exist, ignore error
+      console.log('Column new_game_requested_by might already exist:', alterError);
+    }
   } catch (error) {
     console.error('Error creating active_games table:', error);
     throw error;

@@ -128,7 +128,12 @@ export default function TicTacToePage() {
       const response = await fetch('/api/active-game?gameType=tic-tac-toe');
       const data = await response.json();
 
-      if (data.game && data.game.id === gameId) {
+      if (data.game) {
+        // If the game ID changed (e.g., new game started), update our local game ID
+        if (data.game.id !== gameId) {
+          setGameId(data.game.id);
+        }
+
         const newBoard = JSON.parse(data.game.board);
 
         // Update player names if second player joined
