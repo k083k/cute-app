@@ -77,11 +77,13 @@ export async function POST(request: NextRequest) {
     `;
 
     if (existing.length > 0) {
-      // Update existing game
+      // Update existing game (including player names in case second player joined)
       await sql`
         UPDATE active_games
         SET board = ${board},
             current_turn = ${currentTurn},
+            player_x = ${playerX},
+            player_o = ${playerO},
             winner = ${winner || null},
             is_draw = ${isDraw || false},
             updated_at = NOW()
