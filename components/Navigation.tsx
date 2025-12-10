@@ -67,29 +67,29 @@ export default function Navigation() {
               </div>
 
               {/* Desktop Navigation */}
-              <div className="hidden md:flex items-center gap-2">
-                <div className="flex items-baseline space-x-2">
-                  {navigation.map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <Link
-                        key={item.name}
-                        href={item.href}
-                        className={`relative flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                          isActive(item.href)
-                            ? 'bg-slate-900 text-white shadow-lg'
-                            : 'text-slate-700 hover:bg-slate-100'
-                        }`}
-                      >
-                        <Icon className="h-5 w-5" />
-                        {item.name}
-                      </Link>
-                    );
-                  })}
-                </div>
+              {isAuthenticated && (
+                <div className="hidden md:flex items-center gap-2">
+                  <div className="flex items-baseline space-x-2">
+                    {navigation.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <Link
+                          key={item.name}
+                          href={item.href}
+                          className={`relative flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                            isActive(item.href)
+                              ? 'bg-slate-900 text-white shadow-lg'
+                              : 'text-slate-700 hover:bg-slate-100'
+                          }`}
+                        >
+                          <Icon className="h-5 w-5" />
+                          {item.name}
+                        </Link>
+                      );
+                    })}
+                  </div>
 
-                {/* Logout Button */}
-                {isAuthenticated && (
+                  {/* Logout Button */}
                   <button
                     onClick={handleLogout}
                     className="p-2 rounded-full text-slate-600 hover:bg-red-50 hover:text-red-600 transition-all duration-200"
@@ -97,46 +97,48 @@ export default function Navigation() {
                   >
                     <FontAwesomeIcon icon={faPowerOff} className="h-5 w-5" />
                   </button>
-                )}
-              </div>
+                </div>
+              )}
 
               {/* Mobile menu button */}
-              <div className="md:hidden">
-                <Disclosure.Button className="inline-flex items-center justify-center rounded-full p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400 transition-all">
-                  <span className="sr-only">Open main menu</span>
-                  {open ? (
-                    <XMarkIcon className="block h-6 w-6" aria-hidden="true" />
-                  ) : (
-                    <Bars3Icon className="block h-6 w-6" aria-hidden="true" />
-                  )}
-                </Disclosure.Button>
-              </div>
+              {isAuthenticated && (
+                <div className="md:hidden">
+                  <Disclosure.Button className="inline-flex items-center justify-center rounded-full p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400 transition-all">
+                    <span className="sr-only">Open main menu</span>
+                    {open ? (
+                      <XMarkIcon className="block h-6 w-6" aria-hidden="true" />
+                    ) : (
+                      <Bars3Icon className="block h-6 w-6" aria-hidden="true" />
+                    )}
+                  </Disclosure.Button>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Mobile menu */}
-          <Disclosure.Panel className="md:hidden border-t border-slate-200">
-            <div className="space-y-1 px-2 pb-3 pt-2 sm:px-3">
-              {navigation.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    className={`relative flex items-center gap-3 px-3 py-2 rounded-full text-base font-medium transition-all ${
-                      isActive(item.href)
-                        ? 'bg-slate-900 text-white shadow-lg'
-                        : 'text-slate-700 hover:bg-slate-100'
-                    }`}
-                  >
-                    <Icon className="h-5 w-5" />
-                    {item.name}
-                  </Link>
-                );
-              })}
+          {isAuthenticated && (
+            <Disclosure.Panel className="md:hidden border-t border-slate-200">
+              <div className="space-y-1 px-2 pb-3 pt-2 sm:px-3">
+                {navigation.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      className={`relative flex items-center gap-3 px-3 py-2 rounded-full text-base font-medium transition-all ${
+                        isActive(item.href)
+                          ? 'bg-slate-900 text-white shadow-lg'
+                          : 'text-slate-700 hover:bg-slate-100'
+                      }`}
+                    >
+                      <Icon className="h-5 w-5" />
+                      {item.name}
+                    </Link>
+                  );
+                })}
 
-              {/* Mobile Logout Button */}
-              {isAuthenticated && (
+                {/* Mobile Logout Button */}
                 <button
                   onClick={handleLogout}
                   className="w-full flex items-center gap-3 px-3 py-2 rounded-full text-base font-medium text-red-600 hover:bg-red-50 transition-all"
@@ -144,9 +146,9 @@ export default function Navigation() {
                   <FontAwesomeIcon icon={faPowerOff} className="h-5 w-5" />
                   Logout
                 </button>
-              )}
-            </div>
-          </Disclosure.Panel>
+              </div>
+            </Disclosure.Panel>
+          )}
         </>
       )}
     </Disclosure>
