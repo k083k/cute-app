@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const gameType = searchParams.get('gameType') || 'tic-tac-toe';
 
-    const game = gameStateManager.getGame(gameType);
+    const game = await gameStateManager.getGame(gameType);
 
     return NextResponse.json({ game: game || null });
   } catch (error) {
@@ -78,8 +78,8 @@ export async function POST(request: NextRequest) {
       updatedAt: Date.now(),
     };
 
-    // Update in-memory state (this will trigger SSE broadcast)
-    gameStateManager.setGame(gameState);
+    // Update state (this will trigger SSE broadcast and persist to database)
+    await gameStateManager.setGame(gameState);
 
     // If game is finished, save to history
     if (winner || isDraw) {
@@ -120,7 +120,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    gameStateManager.deleteGame(gameId);
+    await gameStateManager.deleteGame(gameId);
 
     return NextResponse.json({ success: true });
   } catch (error) {
