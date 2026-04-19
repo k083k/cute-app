@@ -83,7 +83,6 @@ export default function HeroSection() {
           transition={{ delay: 0.6, duration: 0.6 }}
           className="text-lg md:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto mb-8 leading-relaxed"
         >
-          Every step you take in law school is building the incredible lawyer you&apos;re meant to be.
           Here&apos;s your daily dose of encouragement and inspiration.
         </motion.p>
 

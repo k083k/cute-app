@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Navigation from "@/components/Navigation";
-import Footer from "@/components/Footer";
 import { Analytics } from "@vercel/analytics/next";
 import { AuthProvider } from "@/components/AuthProvider";
 import AuthGuard from "@/components/AuthGuard";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import ConditionalShell from "@/components/ConditionalShell";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -43,16 +42,12 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col bg-gray-50 dark:bg-slate-900 transition-colors duration-200`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col bg-[#080318] transition-colors duration-200`}
       >
         <ThemeProvider>
           <AuthProvider>
             <AuthGuard>
-              <Navigation />
-              <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {children}
-              </main>
-              <Footer />
+              <ConditionalShell>{children}</ConditionalShell>
             </AuthGuard>
           </AuthProvider>
         </ThemeProvider>

@@ -1,26 +1,28 @@
 'use client';
 
-import { GiftIcon } from '@heroicons/react/24/solid';
 import { useState, useEffect } from 'react';
+import { SILHOUETTES } from './auth/constants';
 
 export default function Footer() {
   const [mounted, setMounted] = useState(false);
-  const currentYear = new Date().getFullYear();
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  useEffect(() => { setMounted(true); }, []);
 
   return (
-    <footer className="glass-slate border-t border-slate-200 dark:border-slate-700 mt-auto backdrop-blur-lg">
-      <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <div className="text-center">
-          <p className="text-slate-700 dark:text-slate-300 text-sm flex items-center justify-center gap-2 font-medium">
-            Made for you <GiftIcon className="h-4 w-4 text-slate-500 dark:text-slate-400" />
-          </p>
+    <footer className="mt-auto">
+      <svg
+        className="w-full block pointer-events-none"
+        viewBox="0 0 400 56"
+        preserveAspectRatio="none"
+        style={{ height: '48px', marginBottom: '-2px' }}
+      >
+        <path d={SILHOUETTES[1]} fill="rgba(8,3,24,0.85)" />
+      </svg>
+
+      <div className="bg-[#080318]/90 backdrop-blur-xl border-t border-white/[0.06] px-4 py-4">
+        <div className="max-w-7xl mx-auto text-center">
           {mounted && (
-            <p className="text-slate-500 dark:text-slate-500 text-xs mt-1">
-              © {currentYear} • Keep pushing, you&apos;re doing amazing!
+            <p className="text-white/25 text-xs tracking-wide">
+              © {new Date().getFullYear()} Daily Encouragement
             </p>
           )}
         </div>

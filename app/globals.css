@@ -82,7 +82,7 @@
 }
 
 body {
-  background: var(--background);
+  background: #080318;
   min-height: 100vh;
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
@@ -252,6 +252,32 @@ form button,
 
 .shadow-stone {
   box-shadow: 0 10px 30px -5px rgba(28, 25, 23, 0.12);
+}
+
+/* Navbar glass — light frosted in light mode, dark frosted in dark mode */
+.nav-glass {
+  background: rgba(255, 255, 255, 0.08);
+}
+.dark .nav-glass {
+  background: rgba(0, 0, 0, 0.38);
+}
+.nav-glass-panel {
+  background: rgba(255, 255, 255, 0.10);
+}
+.dark .nav-glass-panel {
+  background: rgba(0, 0, 0, 0.45);
+}
+
+/* Home page background — theme-aware */
+.home-bg {
+  background-image: url('/beach-light.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.dark .home-bg {
+  background-image: url('/beach-night.jpg');
 }
 
 /* Decorative elements */

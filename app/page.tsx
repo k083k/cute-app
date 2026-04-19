@@ -1,205 +1,307 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { HeartIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
-import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
-import HeroSection from '@/components/HeroSection';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
+import { PlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { CheckBadgeIcon } from '@heroicons/react/24/solid';
+import { useAuth } from '@/components/AuthProvider';
+import { useTheme } from '@/components/ThemeProvider';
+import SeatCard from '@/components/auth/SeatCard';
+import LoginForm from '@/components/auth/LoginForm';
+import SetupForm from '@/components/auth/SetupForm';
+import { CARD_GRADIENTS, SILHOUETTES } from '@/components/auth/constants';
 
-interface BibleVerse {
-  reference: string;
-  text: string;
-  translation_id: string;
-  translation_name: string;
-  translation_language?: string;
-}
+interface User { id: string; name: string; }
+interface SlotState { password: string; name: string; showPassword: boolean; error: string; loading: boolean; }
 
-export default function BiblePage() {
-  const [verse, setVerse] = useState<BibleVerse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [mounted, setMounted] = useState(false);
-  const [isFavorited, setIsFavorited] = useState(false);
-  const [showHeartAnimation, setShowHeartAnimation] = useState(false);
+const emptySlot = (): SlotState => ({ password: '', name: '', showPassword: false, error: '', loading: false });
+
+export default function LandingPage() {
+  const router = useRouter();
+  const { user: currentUser, isLoading: authLoading } = useAuth();
+  const { theme } = useTheme();
+
+  const [users, setUsers] = useState<(User | null)[]>([null, null]);
+  const [pageLoading, setPageLoading] = useState(true);
+  const [slots, setSlots] = useState<SlotState[]>([emptySlot(), emptySlot()]);
+  const [activeSlot, setActiveSlot] = useState<number | null>(null);
+  const [celebrating, setCelebrating] = useState<boolean[]>([false, false]);
+
+  useEffect(() => { loadUsers(); }, []);
 
   useEffect(() => {
-    setMounted(true);
-    fetchDailyVerse();
-  }, []);
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') handleClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  });
 
-  const fetchDailyVerse = async () => {
+  const loadUsers = async () => {
     try {
-      setLoading(true);
-      setError(null);
-
-      const response = await fetch('https://bible-api.com/data/web/random', {
-        cache: 'no-store',
-      });
-
-      if (!response.ok) throw new Error('Failed to fetch verse');
-
-      const data = await response.json();
-      const randomVerse = data.random_verse;
-
-      setVerse({
-        reference: `${randomVerse.book} ${randomVerse.chapter}:${randomVerse.verse}`,
-        text: randomVerse.text,
-        translation_id: data.translation.identifier,
-        translation_name: data.translation.name,
-        translation_language: data.translation.language,
-      });
-      setIsFavorited(false);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
-      setLoading(false);
-    }
+      const res = await fetch('/api/users');
+      const data = await res.json();
+      const filled: (User | null)[] = [null, null];
+      (data.users ?? []).forEach((u: User, i: number) => { if (i < 2) filled[i] = u; });
+      setUsers(filled);
+    } catch { /* silent */ }
+    finally { setPageLoading(false); }
   };
 
-  const handleFavorite = () => {
-    setIsFavorited(!isFavorited);
-    setShowHeartAnimation(true);
-    setTimeout(() => setShowHeartAnimation(false), 600);
+  const patch = (i: number, updates: Partial<SlotState>) =>
+    setSlots(prev => prev.map((s, idx) => idx === i ? { ...s, ...updates } : s));
 
-    if (!isFavorited && verse) {
-      const favorites = JSON.parse(localStorage.getItem('favoriteVerses') || '[]');
-      favorites.push({ ...verse, savedAt: new Date().toISOString() });
-      localStorage.setItem('favoriteVerses', JSON.stringify(favorites));
-    }
+  const handleOpen = (i: number) => {
+    if (activeSlot !== null) return;
+    patch(i, { error: '', password: '', name: '' });
+    setActiveSlot(i);
   };
 
-  if (loading) {
+  const handleClose = () => {
+    setActiveSlot(null);
+    setCelebrating([false, false]);
+  };
+
+  // Auto-celebrate when the already-logged-in user opens their card
+  useEffect(() => {
+    if (activeSlot === null) return;
+    const slotUser = users[activeSlot];
+    if (!(slotUser && currentUser && slotUser.id === currentUser.id)) return;
+    const t = setTimeout(() => {
+      setCelebrating(prev => prev.map((v, idx) => idx === activeSlot ? true : v));
+    }, 450);
+    return () => clearTimeout(t);
+  }, [activeSlot, users, currentUser]);
+
+  const handleLogin = async (i: number) => {
+    patch(i, { loading: true, error: '' });
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: slots[i].password }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        patch(i, { loading: false });
+        setCelebrating(prev => prev.map((v, idx) => idx === i ? true : v));
+      } else { patch(i, { error: data.error || 'Incorrect password', loading: false }); }
+    } catch { patch(i, { error: 'Something went wrong.', loading: false }); }
+  };
+
+  const handleSetup = async (i: number) => {
+    patch(i, { loading: true, error: '' });
+    try {
+      const res = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: slots[i].name.trim(), password: slots[i].password }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        const loginRes = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: slots[i].password }),
+        });
+        if (loginRes.ok) { window.location.href = '/home'; }
+        else { await loadUsers(); patch(i, { loading: false, error: 'Account created — you can now log in.' }); handleClose(); }
+      } else { patch(i, { error: data.error || 'Setup failed.', loading: false }); }
+    } catch { patch(i, { error: 'Something went wrong.', loading: false }); }
+  };
+
+  if (pageLoading || authLoading) {
     return (
-      <>
-        <HeroSection />
-        <div className="flex flex-col items-center justify-center min-h-[40vh]">
-          <motion.div
-            animate={{ scale: [1, 1.1, 1], opacity: [0.5, 1, 0.5] }}
-            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-            className="text-slate-600 dark:text-slate-400 text-xl mb-4"
-          >
-            Finding the perfect verse for you...
-          </motion.div>
-          <div className="flex gap-2">
-            {[0, 1, 2].map((i) => (
-              <motion.div
-                key={i}
-                className="w-3 h-3 bg-slate-400 dark:bg-slate-600 rounded-full"
-                animate={{ y: [0, -10, 0] }}
-                transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.2 }}
-              />
-            ))}
-          </div>
-        </div>
-      </>
+      <div className="min-h-screen bg-stone-100 dark:bg-[#0a0a0f] flex items-center justify-center">
+        <div className="w-8 h-8 border-[3px] border-slate-200 dark:border-slate-700 border-t-slate-600 dark:border-t-slate-400 rounded-full animate-spin" />
+      </div>
     );
   }
 
-  if (error) {
-    return (
-      <>
-        <HeroSection />
-        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-          <div className="text-slate-600 dark:text-slate-400 text-xl">Oops! Something went wrong</div>
-          <button
-            onClick={fetchDailyVerse}
-            className="bg-slate-800 dark:bg-slate-200 hover:bg-slate-900 dark:hover:bg-white text-white dark:text-slate-900 px-8 py-3 rounded-full hover:shadow-lg transition-all transform hover:scale-105"
-          >
-            Try Again
-          </button>
-        </div>
-      </>
-    );
-  }
-
+  const bothEmpty = !users[0] && !users[1];
   return (
-    <>
-      <HeroSection />
+    <div className="min-h-screen bg-stone-100 dark:bg-[#0a0a0f] flex flex-col items-center justify-center px-6 py-12">
+
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: -16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="flex flex-col items-center justify-center px-4 pb-12"
+        transition={{ duration: 0.5 }}
+        className="text-center mb-10"
       >
-        <div className="glass-slate rounded-2xl shadow-slate p-8 md:p-12 max-w-3xl w-full relative border border-slate-200 dark:border-slate-700">
-          {/* Favorite button */}
-          <motion.button
-            onClick={handleFavorite}
-            className={`absolute top-4 right-4 p-2 rounded-full transition-all ${
-              isFavorited
-                ? 'bg-slate-100 dark:bg-slate-700'
-                : 'bg-white/50 dark:bg-slate-800/50 hover:bg-white/80 dark:hover:bg-slate-700/80'
-            }`}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            aria-label={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
-          >
-            {isFavorited ? (
-              <HeartSolidIcon
-                className={`w-6 h-6 text-slate-700 dark:text-slate-300 ${showHeartAnimation ? 'animate-heart-beat' : ''}`}
-              />
-            ) : (
-              <HeartIcon className="w-6 h-6 text-slate-400 dark:text-slate-500" />
-            )}
-          </motion.button>
-
-          <div className="text-center mb-6">
-            <h2 className="text-3xl md:text-4xl font-bold text-slate-800 dark:text-white mb-2">
-              Today&apos;s Verse
-            </h2>
-            {mounted && (
-              <p className="text-slate-500 dark:text-slate-400 text-sm">
-                {new Date().toLocaleDateString('en-US', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                })}
-              </p>
-            )}
-          </div>
-
-          {verse && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-            >
-              <div className="relative mb-8">
-                <svg
-                  className="absolute -left-4 -top-4 h-8 w-8 text-slate-200 dark:text-slate-700"
-                  fill="currentColor"
-                  viewBox="0 0 32 32"
-                  aria-hidden="true"
-                >
-                  <path d="M9.352 4C4.456 7.456 1 13.12 1 19.36c0 5.088 3.072 8.064 6.624 8.064 3.36 0 5.856-2.688 5.856-5.856 0-3.168-2.208-5.472-5.088-5.472-.576 0-1.344.096-1.536.192.48-3.264 3.552-7.104 6.624-9.024L9.352 4zm16.512 0c-4.8 3.456-8.256 9.12-8.256 15.36 0 5.088 3.072 8.064 6.624 8.064 3.264 0 5.856-2.688 5.856-5.856 0-3.168-2.304-5.472-5.184-5.472-.576 0-1.248.096-1.44.192.48-3.264 3.456-7.104 6.528-9.024L25.864 4z" />
-                </svg>
-                <blockquote className="text-xl md:text-2xl text-slate-800 dark:text-slate-200 leading-relaxed text-center px-8">
-                  {verse.text.trim()}
-                </blockquote>
-              </div>
-              <div className="text-center border-t border-slate-200 dark:border-slate-700 pt-6">
-                <p className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white mb-1">
-                  {verse.reference}
-                </p>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
-                  {verse.translation_name}
-                </p>
-              </div>
-            </motion.div>
-          )}
-        </div>
-
-        <motion.button
-          onClick={fetchDailyVerse}
-          className="mt-8 px-8 py-3 bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900 rounded-full hover:bg-slate-900 dark:hover:bg-white hover:shadow-lg transition-all font-medium flex items-center gap-2 group"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <ArrowPathIcon className="w-5 h-5 group-hover:rotate-180 transition-transform duration-500" />
-          Get New Verse
-        </motion.button>
+        <img
+          src={theme === 'dark' ? '/logo-black.png' : '/logo-white.png'}
+          alt="Logo"
+          className="h-14 w-auto mx-auto mb-4"
+        />
+        <p className="text-slate-500 dark:text-slate-400 text-sm mt-1.5">
+          {bothEmpty ? 'Choose a seat to get started.' : 'Choose your seat to continue.'}
+        </p>
       </motion.div>
-    </>
+
+      <LayoutGroup id="seats">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="grid grid-cols-2 gap-5 w-full max-w-lg"
+        >
+          {([0, 1] as const).map((i) => {
+            const isCurrentUser = !!(users[i] && currentUser && users[i]!.id === currentUser.id);
+            return (
+              <SeatCard
+                key={i}
+                index={i}
+                user={users[i]}
+                isActive={activeSlot === i}
+                isOther={activeSlot !== null && activeSlot !== i}
+                isCurrentUser={isCurrentUser}
+                onOpen={() => handleOpen(i)}
+              />
+            );
+          })}
+        </motion.div>
+
+        <AnimatePresence>
+          {activeSlot !== null && (() => {
+            const i = activeSlot;
+            const user = users[i];
+            const slot = slots[i];
+            const isCurrentUser = !!(user && currentUser && user.id === currentUser.id);
+            return (
+              <>
+                <motion.div
+                  key="backdrop"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.25 }}
+                  className="fixed inset-0 bg-black/70 backdrop-blur-md z-40"
+                  onClick={handleClose}
+                />
+
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-6 pointer-events-none">
+                  <motion.div
+                    key={`expanded-${i}`}
+                    layoutId={`seat-${i}`}
+                    className="w-full max-w-[380px] rounded-3xl shadow-2xl pointer-events-auto overflow-hidden relative"
+                    style={{ background: CARD_GRADIENTS[i] }}
+                  >
+                    {/* Full gradient depth */}
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/70 pointer-events-none z-0" />
+
+                    {/* Forest silhouette */}
+                    <svg
+                      className="absolute bottom-0 left-0 w-full pointer-events-none z-0"
+                      viewBox="0 0 400 80"
+                      preserveAspectRatio="none"
+                      style={{ height: '110px' }}
+                    >
+                      <path d={SILHOUETTES[i]} fill="rgba(8,3,24,0.72)" />
+                    </svg>
+
+                    {/* Close button */}
+                    {!celebrating[i] && (
+                      <button
+                        onClick={handleClose}
+                        className="absolute top-4 right-4 z-20 p-2 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors"
+                        aria-label="Close"
+                      >
+                        <XMarkIcon className="w-4 h-4" />
+                      </button>
+                    )}
+
+                    <div className="relative z-10 flex flex-col items-center px-8 pt-10 pb-9">
+                      {/* Avatar + ring */}
+                      <div className="relative w-32 h-32 flex items-center justify-center mb-4">
+                        <div className="w-24 h-24 rounded-full bg-white/20 border-[2.5px] border-white/60 ring-4 ring-white/15 flex items-center justify-center shadow-2xl">
+                          {user ? (
+                            <span className="text-4xl font-bold text-white select-none drop-shadow">
+                              {user.name.charAt(0).toUpperCase()}
+                            </span>
+                          ) : (
+                            <PlusIcon className="w-10 h-10 text-white" />
+                          )}
+                        </div>
+
+                        <AnimatePresence>
+                          {celebrating[i] && (
+                            <motion.svg
+                              key="ring"
+                              className="absolute inset-0 w-full h-full"
+                              viewBox="0 0 128 128"
+                              style={{ transform: 'rotate(-90deg)' }}
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              transition={{ duration: 0.2 }}
+                            >
+                              <motion.circle
+                                cx="64" cy="64" r="60"
+                                fill="none"
+                                stroke="#34d399"
+                                strokeWidth="5"
+                                strokeLinecap="round"
+                                strokeDasharray={376.99}
+                                initial={{ strokeDashoffset: 376.99 }}
+                                animate={{ strokeDashoffset: 0 }}
+                                transition={{ duration: 1.2, ease: 'easeInOut' }}
+                                onAnimationComplete={() => router.push('/home')}
+                              />
+                            </motion.svg>
+                          )}
+                        </AnimatePresence>
+                      </div>
+
+                      {/* Name + subtitle */}
+                      <motion.div
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.18, duration: 0.22 }}
+                        className="text-center mb-6"
+                      >
+                        {user ? (
+                          <>
+                            <div className="flex items-center justify-center gap-1.5">
+                              <p className="text-xl font-bold text-white drop-shadow">{user.name}</p>
+                              <CheckBadgeIcon className="w-5 h-5 text-blue-300" />
+                            </div>
+                            <p className="text-sm text-white/80 mt-1 font-medium">
+                              {celebrating[i] || isCurrentUser ? 'Taking you in…' : 'Enter your password'}
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-xl font-bold text-white drop-shadow">Set up your space</p>
+                            <p className="text-sm text-white/80 mt-1 font-medium">Create your account</p>
+                          </>
+                        )}
+                      </motion.div>
+
+                      {/* Form — only shown when not already authenticated, hidden while celebrating */}
+                      <AnimatePresence>
+                        {!celebrating[i] && !isCurrentUser && (
+                          <motion.div
+                            key="form"
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 8 }}
+                            transition={{ delay: 0.2, duration: 0.2 }}
+                            className="w-full rounded-2xl bg-black/35 backdrop-blur-sm border border-white/10 px-5 py-5"
+                          >
+                            {user ? (
+                              <LoginForm slot={slot} onLogin={() => handleLogin(i)} onPatch={(u) => patch(i, u)} />
+                            ) : (
+                              <SetupForm slot={slot} onSetup={() => handleSetup(i)} onPatch={(u) => patch(i, u)} />
+                            )}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  </motion.div>
+                </div>
+              </>
+            );
+          })()}
+        </AnimatePresence>
+      </LayoutGroup>
+    </div>
   );
 }
