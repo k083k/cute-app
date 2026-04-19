@@ -111,7 +111,7 @@ export default function LandingPage() {
 
   if (pageLoading || authLoading) {
     return (
-      <div className="min-h-screen bg-stone-100 dark:bg-[#0a0a0f] flex items-center justify-center">
+      <div className="h-dvh bg-stone-100 dark:bg-[#0a0a0f] flex items-center justify-center">
         <div className="w-8 h-8 border-[3px] border-slate-200 dark:border-slate-700 border-t-slate-600 dark:border-t-slate-400 rounded-full animate-spin" />
       </div>
     );
@@ -119,7 +119,7 @@ export default function LandingPage() {
 
   const bothEmpty = !users[0] && !users[1];
   return (
-    <div className="min-h-screen bg-stone-100 dark:bg-[#0a0a0f] flex flex-col items-center justify-center px-6 py-12">
+    <div className="h-dvh bg-stone-100 dark:bg-[#0a0a0f] flex flex-col items-center justify-center px-6 py-8 overflow-hidden">
 
       <motion.div
         initial={{ opacity: 0, y: -16 }}
