@@ -41,7 +41,7 @@ export default function Modal({ isOpen, onClose, children, title, onPrevious, on
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-6xl transform overflow-hidden rounded-lg bg-white shadow-2xl transition-all">
+              <Dialog.Panel className="w-full max-w-6xl transform overflow-hidden rounded-lg bg-white dark:bg-slate-900 shadow-2xl transition-all relative">
                 {/* Header - only show if title exists */}
                 {title && (
                   <div className="flex items-center justify-between p-4 border-b border-gray-200">

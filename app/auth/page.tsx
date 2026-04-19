@@ -24,8 +24,8 @@ export default function AuthPage() {
       const data = await response.json();
       setIsSetup(data.isSetup);
       setUserCount(data.users?.length || 0);
-    } catch (error) {
-      console.error('Failed to check setup:', error);
+    } catch {
+      setError('Failed to connect. Please refresh.');
     }
   };
 
@@ -44,7 +44,6 @@ export default function AuthPage() {
       const data = await response.json();
 
       if (response.ok) {
-        // Login automatically with the just-created account
         const loginResponse = await fetch('/api/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -52,16 +51,15 @@ export default function AuthPage() {
         });
 
         if (loginResponse.ok) {
-          // Use window.location for hard redirect to ensure session is loaded
           window.location.href = '/';
         } else {
-          setError('Account created but login failed. Please login manually.');
+          setError('Account created but login failed. Please try logging in.');
         }
       } else {
         setError(data.error || 'Setup failed');
       }
-    } catch (error) {
-      setError('An error occurred during setup');
+    } catch {
+      setError('An error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -82,13 +80,12 @@ export default function AuthPage() {
       const data = await response.json();
 
       if (response.ok) {
-        // Use window.location for hard redirect to ensure session is loaded
         window.location.href = '/';
       } else {
-        setError(data.error || 'Login failed');
+        setError(data.error || 'Incorrect password');
       }
-    } catch (error) {
-      setError('An error occurred during login');
+    } catch {
+      setError('An error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -96,8 +93,8 @@ export default function AuthPage() {
 
   if (isSetup === null) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100 flex items-center justify-center">
-        <div className="text-slate-600">Loading...</div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 flex items-center justify-center">
+        <div className="text-slate-500 dark:text-slate-400">Loading...</div>
       </div>
     );
   }
@@ -105,30 +102,26 @@ export default function AuthPage() {
   const isSignupMode = !isSetup || showSignup;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100 flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 flex items-center justify-center px-4 py-12">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         className="w-full max-w-md"
       >
-        {/* Card */}
-        <div className="bg-white rounded-3xl shadow-xl border border-slate-200 p-8">
-
-          {/* Title */}
-          <h1 className="text-3xl font-bold text-center text-slate-900 mb-2">
+        <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-xl border border-slate-200 dark:border-slate-700 p-8">
+          <h1 className="text-3xl font-bold text-center text-slate-900 dark:text-white mb-2">
             {isSignupMode ? 'Create Your Account' : 'Welcome Back'}
           </h1>
-          <p className="text-center text-slate-600 mb-8">
+          <p className="text-center text-slate-600 dark:text-slate-400 mb-8">
             {isSignupMode
               ? 'Set up your account to get started'
               : 'Enter your password to continue'}
           </p>
 
-          {/* Form */}
           <form onSubmit={isSignupMode ? handleSetup : handleLogin} className="space-y-6">
             {isSignupMode && (
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                   Your Name
                 </label>
                 <input
@@ -137,29 +130,30 @@ export default function AuthPage() {
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Enter your name"
                   required
-                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-slate-800 focus:outline-none transition-colors"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-slate-800 dark:focus:border-slate-400 focus:outline-none transition-colors"
                 />
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                 Password
               </label>
               <div className="relative">
                 <input
-                  type={showPassword ? "text" : "password"}
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
                   required
                   minLength={6}
-                  className="w-full px-4 py-3 pr-12 rounded-xl border-2 border-slate-200 focus:border-slate-800 focus:outline-none transition-colors"
+                  className="w-full px-4 py-3 pr-12 rounded-xl border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-slate-800 dark:focus:border-slate-400 focus:outline-none transition-colors"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors p-1"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? (
                     <EyeSlashIcon className="w-5 h-5" />
@@ -174,7 +168,8 @@ export default function AuthPage() {
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm"
+                className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-xl text-sm"
+                role="alert"
               >
                 {error}
               </motion.div>
@@ -183,13 +178,12 @@ export default function AuthPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 bg-slate-800 text-white rounded-xl font-medium shadow-lg hover:bg-slate-900 hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-3 bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900 rounded-xl font-medium shadow-lg hover:bg-slate-900 dark:hover:bg-white hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? 'Please wait...' : isSignupMode ? 'Create Account' : 'Login'}
             </button>
           </form>
 
-          {/* Toggle between login and signup */}
           {isSetup && userCount < 2 && (
             <div className="mt-6 text-center">
               <button
@@ -200,7 +194,7 @@ export default function AuthPage() {
                   setName('');
                   setPassword('');
                 }}
-                className="text-sm text-slate-600 hover:text-slate-900 transition-colors"
+                className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
               >
                 {showSignup ? 'Already have an account? Login' : "Don't have an account? Create One"}
               </button>

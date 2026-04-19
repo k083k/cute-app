@@ -1,7 +1,10 @@
 @import "tailwindcss";
 
+/* Class-based dark mode — applies dark: utilities when .dark is on <html> */
+@custom-variant dark (&:is(.dark, .dark *));
+
 :root {
-  --background: #ffffff;
+  --background: #fafafa;
   --foreground: #171717;
 
   /* Muted Color Palette */
@@ -27,21 +30,25 @@
   --stone-800: #292524;
   --stone-900: #1c1917;
 
-  --blue-gray-50: #f8fafc;
-  --blue-gray-100: #f1f5f9;
-  --blue-gray-200: #e2e8f0;
-  --blue-gray-300: #cbd5e1;
-  --blue-gray-400: #94a3b8;
-  --blue-gray-500: #64748b;
-  --blue-gray-600: #475569;
-  --blue-gray-700: #334155;
-  --blue-gray-800: #1e293b;
-  --blue-gray-900: #0f172a;
-
-  /* Legacy warm colors (keeping minimal for compatibility) */
+  /* Legacy warm colors (keeping for compatibility) */
   --peach-500: #64748b;
   --sage-500: #475569;
   --lavender-500: #334155;
+}
+
+.dark {
+  --background: #0f172a;
+  --foreground: #f1f5f9;
+  --slate-50: #1e293b;
+  --slate-100: #1e293b;
+  --slate-200: #334155;
+  --slate-300: #475569;
+  --slate-400: #64748b;
+  --slate-500: #94a3b8;
+  --slate-600: #cbd5e1;
+  --slate-700: #e2e8f0;
+  --slate-800: #f1f5f9;
+  --slate-900: #f8fafc;
 }
 
 @theme inline {
@@ -74,19 +81,12 @@
   --color-stone-900: var(--stone-900);
 }
 
-/* Override dark mode for this app - we want to keep it light and cheerful */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #ffffff;
-    --foreground: #171717;
-  }
-}
-
 body {
-  background: #fafafa;
+  background: var(--background);
   min-height: 100vh;
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 /* Mobile optimizations */
@@ -101,8 +101,11 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Touch target size for mobile */
-button, a {
+/* Touch targets — scoped so they don't break inline or icon-only elements */
+nav button,
+nav a,
+form button,
+.touch-target {
   min-height: 44px;
   min-width: 44px;
 }
@@ -205,11 +208,21 @@ button, a {
   border: 1px solid rgba(226, 232, 240, 0.5);
 }
 
+.dark .glass {
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(71, 85, 105, 0.5);
+}
+
 .glass-slate {
   background: rgba(248, 250, 252, 0.8);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(226, 232, 240, 0.5);
+}
+
+.dark .glass-slate {
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(51, 65, 85, 0.5);
 }
 
 .glass-stone {
@@ -219,13 +232,22 @@ button, a {
   border: 1px solid rgba(231, 229, 228, 0.5);
 }
 
-/* Custom shadow */
+.dark .glass-stone {
+  background: rgba(28, 25, 23, 0.8);
+  border: 1px solid rgba(68, 64, 60, 0.5);
+}
+
+/* Custom shadows */
 .shadow-3xl {
   box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.15);
 }
 
 .shadow-slate {
   box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.15);
+}
+
+.dark .shadow-slate {
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.4);
 }
 
 .shadow-stone {
