@@ -30,10 +30,10 @@ export default function GalleryPage() {
 
   if (loading) {
     return (
-      <div className="h-[calc(100dvh-4rem)] flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 h-[calc(100dvh-4rem)] flex items-center justify-center">
         <div className="flex gap-1.5">
           {[0, 1, 2].map(i => (
-            <motion.div key={i} className="w-1.5 h-1.5 bg-white/40 rounded-full"
+            <motion.div key={i} className="w-1.5 h-1.5 bg-slate-400 rounded-full"
               animate={{ y: [0, -6, 0] }} transition={{ duration: 0.7, repeat: Infinity, delay: i * 0.15 }} />
           ))}
         </div>
@@ -43,28 +43,22 @@ export default function GalleryPage() {
 
   if (images.length === 0) {
     return (
-      <div className="h-[calc(100dvh-4rem)] flex items-center justify-center">
-        <p className="text-white/50 text-sm">No photos yet</p>
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 h-[calc(100dvh-4rem)] flex items-center justify-center">
+        <p className="text-slate-400 dark:text-slate-600 text-sm">No photos yet</p>
       </div>
     );
   }
 
   return (
-    <>
-      <div className="fixed inset-0 -z-10 pointer-events-none home-bg">
-        <div className="absolute inset-0 bg-black/30 dark:bg-black/40" />
-      </div>
-
-      <div className="h-[calc(100dvh-4rem)] flex items-center justify-center px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="max-w-5xl w-full"
-        >
-          <PhotoViewer images={images} selected={selected} onSelect={setSelected} />
-        </motion.div>
-      </div>
-    </>
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors h-[calc(100dvh-4rem)] flex items-center justify-center px-6">
+      <motion.div
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="max-w-5xl w-full"
+      >
+        <PhotoViewer images={images} selected={selected} onSelect={setSelected} />
+      </motion.div>
+    </div>
   );
 }
