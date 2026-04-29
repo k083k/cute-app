@@ -42,7 +42,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col bg-[#080318] transition-colors duration-200`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col bg-slate-50 dark:bg-[#080318] transition-colors duration-200`}
       >
         <ThemeProvider>
           <AuthProvider>
